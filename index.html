@@ -1,5 +1,127 @@
 <!doctype html>
-<html>
-  <head><meta charset="utf-8"><title>Hello</title></head>
-  <body><h1>Hello from GitHub Pages ✅</h1></body>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Apples to Apples — Standalone (Email Purchasing)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #f9fafb; }
+    h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f1f5f9; text-align: left; }
+    button { padding: 6px 12px; margin-right: 6px; cursor: pointer; }
+    .lowest { background: #dcfce7; }
+    .awarded { background: #fef9c3; }
+    .toolbar { margin-bottom: 1rem; }
+    .settings { display: none; margin-bottom: 1rem; padding: 0.5rem; border: 1px solid #ddd; background: #fff; }
+    .settings input { margin-right: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Apples to Apples (Standalone with Email Purchasing)</h1>
+
+  <div class="toolbar">
+    <button onclick="addRow()">Add Vendor Row</button>
+    <button onclick="exportCSV()">Export CSV</button>
+    <button onclick="emailPurchasing()">Email Purchasing</button>
+    <button onclick="toggleSettings()">⚙️ Settings</button>
+  </div>
+
+  <div class="settings" id="settingsPanel">
+    Purchasing Email: <input type="email" id="purchasingEmail" placeholder="purchasing@example.com">
+    CC: <input type="email" id="ccEmail" placeholder="optional@company.com">
+    Subject: <input type="text" id="emailSubject" placeholder="Apples to Apples – Comparison">
+    <button onclick="saveSettings()">Save</button>
+  </div>
+
+  <table id="vendorTable">
+    <thead>
+      <tr>
+        <th>Vendor</th>
+        <th>Quote</th>
+        <th>Deposit</th>
+        <th>Timeline</th>
+        <th>Status</th>
+        <th>Docs</th>
+        <th>Award</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let settings = JSON.parse(localStorage.getItem('a2a-settings') || '{}');
+    const tableBody = document.querySelector('#vendorTable tbody');
+
+    function addRow(vendor='', quote='', deposit='', timeline='', status='', docs='❌') {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td contenteditable="true">${vendor}</td>
+        <td contenteditable="true">${quote}</td>
+        <td contenteditable="true">${deposit}</td>
+        <td contenteditable="true">${timeline}</td>
+        <td contenteditable="true">${status}</td>
+        <td><button onclick="toggleDocs(this)">${docs}</button></td>
+        <td><button onclick="awardVendor(this)">Award</button></td>
+      `;
+      tableBody.appendChild(row);
+    }
+
+    function toggleDocs(btn) {
+      btn.textContent = (btn.textContent === '❌') ? '✅' : '❌';
+    }
+
+    function awardVendor(btn) {
+      // clear old award
+      [...tableBody.rows].forEach(r => r.classList.remove('awarded'));
+      // set new award
+      btn.closest('tr').classList.add('awarded');
+    }
+
+    function exportCSV() {
+      let csv = [];
+      [...tableBody.rows].forEach(r => {
+        let cells = [...r.cells].map(c => c.textContent.trim());
+        csv.push(cells.join(','));
+      });
+      let blob = new Blob([csv.join('\\n')], {type:'text/csv'});
+      let a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'apples_to_apples.csv';
+      a.click();
+    }
+
+    function emailPurchasing() {
+      exportCSV(); // auto-download
+      let to = settings.to || '';
+      let cc = settings.cc || '';
+      let subject = (settings.subject || 'Apples to Apples – Comparison');
+      let body = "Hello Purchasing,%0D%0A%0D%0ASee attached Apples to Apples comparison.%0D%0A%0D%0AThanks.";
+      let url = `mailto:${encodeURIComponent(to)}?cc=${encodeURIComponent(cc)}&subject=${encodeURIComponent(subject)}&body=${body}`;
+      window.location.href = url;
+    }
+
+    function toggleSettings() {
+      document.getElementById('settingsPanel').style.display =
+        document.getElementById('settingsPanel').style.display === 'none' ? 'block' : 'none';
+      document.getElementById('purchasingEmail').value = settings.to || '';
+      document.getElementById('ccEmail').value = settings.cc || '';
+      document.getElementById('emailSubject').value = settings.subject || '';
+    }
+
+    function saveSettings() {
+      settings.to = document.getElementById('purchasingEmail').value;
+      settings.cc = document.getElementById('ccEmail').value;
+      settings.subject = document.getElementById('emailSubject').value;
+      localStorage.setItem('a2a-settings', JSON.stringify(settings));
+      alert('Settings saved!');
+    }
+
+    // start with one row
+    addRow('EverOn', '54276.24', '0%', '2–3 weeks', 'Turnkey install', '✅');
+    addRow('Simplex Repair', '23971.50', '0%', 'Unknown lead time', 'Repair only', '❌');
+    addRow('Local Alarm Co.', '50890.00', '25%', '2 weeks', 'Install, excludes devices', '✅');
+  </script>
+</body>
 </html>
