@@ -129,13 +129,12 @@
       reader.readAsText(file);
     }
 
-function resetSample() {
-  tbody.innerHTML = '';
-  addRow('EverOn', '54276.24', '0%', '2025-09-01', '2025-09-15', 'Turnkey install', '✅', 'Approved');
-  addRow('Simplex Repair', '23971.50', '0%', '2025-09-05', '', 'Repair only', '❌', 'On Hold');
-  addRow('Local Alarm Co.', '50890.00', '25%', '2025-09-08', '', 'Install; excludes devices', '✅', 'On Hold');
-}
-
+    function resetSample() {
+      tbody.innerHTML = '';
+      addRow('EverOn', '54276.24', '0%', '2025-09-01', '2025-09-15', 'Turnkey install', '✅', 'Approved');
+      addRow('Simplex Repair', '23971.50', '0%', '2025-09-05', '', 'Repair only', '❌', 'On Hold');
+      addRow('Local Alarm Co.', '50890.00', '25%', '2025-09-08', '', 'Install; excludes devices', '✅', 'On Hold');
+    }
 
     // start with sample
     resetSample();
