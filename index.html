@@ -5,21 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apples to Apples</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; background: #f8fafc; color: #0f172a; }
-    h1 { font-size: 22px; margin: 0 0 12px; }
+    body { font-family: system-ui, sans-serif; margin: 24px; background: #f8fafc; color: #0f172a; }
+    h1 { font-size: 22px; margin-bottom: 12px; }
     .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin: 12px 0 16px; }
-    button, input[type="file"], select { font: inherit; }
-    button { padding: 8px 12px; cursor: pointer; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; }
+    button { padding: 6px 10px; cursor: pointer; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; }
     button:hover { background: #f1f5f9; }
     table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; }
-    th, td { border-bottom: 1px solid #e2e8f0; padding: 10px; text-align: left; vertical-align: middle; }
-    th { background: #f1f5f9; font-weight: 600; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; text-align: left; }
+    th { background: #f1f5f9; }
     td[contenteditable="true"] { background: #fff; }
     .right { text-align: right; }
     .center { text-align: center; }
-    .muted { color:#64748b; font-size: 13px; }
-    .note { margin-top:8px; color:#475569; }
-    .hidden-input { display:none; }
+    select { padding: 4px; }
+    input[type="file"] { display:none; }
   </style>
 </head>
 <body>
@@ -27,31 +25,25 @@
 
   <div class="toolbar">
     <button onclick="addRow()">Add Vendor Row</button>
-    <button onclick="triggerUpload()">Upload CSV</button>
-    <input id="csvInput" class="hidden-input" type="file" accept=".csv" />
+    <button onclick="document.getElementById('csvInput').click()">Upload CSV</button>
+    <input id="csvInput" type="file" accept=".csv" onchange="handleUpload(event)" />
     <button onclick="exportCSV()">Export CSV</button>
     <button onclick="resetSample()">Reset Sample</button>
-  </div>
-
-  <div class="muted note">
-    Tip: Double-click any cell to edit. “Docs” toggles between ❌ and ✅.  
-    “Project Decision” lets you choose Approved / Denied / On Hold.  
-    Use “Revised Quote” to capture a new number from a vendor, then click “Apply Revised” to copy it into the main Quote.
   </div>
 
   <table id="vendorTable">
     <thead>
       <tr>
         <th>Vendor Name</th>
-        <th class="right">Quote</th>
-        <th class="right">Requested Deposit</th>
+        <th>Quote</th>
+        <th>Requested Deposit</th>
         <th>Project Start Date</th>
         <th>Project Completed Date</th>
         <th>Status</th>
-        <th class="center">Docs</th>
+        <th>Docs</th>
         <th>Project Decision</th>
-        <th class="right">Revised Quote</th>
-        <th class="center">Actions</th>
+        <th>Revised Quote</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -59,8 +51,92 @@
 
   <script>
     const tbody = document.querySelector('#vendorTable tbody');
-    const csvInput = document.getElementById('csvInput');
 
-    // --- Helpers ---
-    function addRow(
-      vendor='', quote='', reqDeposit='', startDate
+    function addRow(vendor='', quote='', deposit='', start='', completed='', status='', docs='❌', decision='On Hold', revised='') {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td contenteditable="true">${vendor}</td>
+        <td contenteditable="true" class="right">${quote}</td>
+        <td contenteditable="true" class="right">${deposit}</td>
+        <td contenteditable="true">${start}</td>
+        <td contenteditable="true">${completed}</td>
+        <td contenteditable="true">${status}</td>
+        <td class="center"><button onclick="toggleDocs(this)">${docs}</button></td>
+        <td>
+          <select>
+            <option ${decision==='Approved'?'selected':''}>Approved</option>
+            <option ${decision==='Denied'?'selected':''}>Denied</option>
+            <option ${decision==='On Hold'?'selected':''}>On Hold</option>
+          </select>
+        </td>
+        <td contenteditable="true" class="right">${revised}</td>
+        <td class="center">
+          <button onclick="applyRevised(this)">Apply Revised</button>
+          <button onclick="deleteRow(this)">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    function toggleDocs(btn) {
+      btn.textContent = (btn.textContent === '❌') ? '✅' : '❌';
+    }
+
+    function applyRevised(btn) {
+      const row = btn.closest('tr');
+      const revised = row.cells[8].textContent.trim();
+      if (revised) {
+        row.cells[1].textContent = revised; // overwrite Quote
+        row.cells[8].textContent = ''; // clear Revised Quote
+      }
+    }
+
+    function deleteRow(btn) {
+      btn.closest('tr').remove();
+    }
+
+    function exportCSV() {
+      let csv = [];
+      const headers = [...document.querySelectorAll('#vendorTable th')].map(h => h.textContent.trim());
+      csv.push(headers.join(','));
+      [...tbody.rows].forEach(r => {
+        let cells = [...r.cells].map((c,i) => {
+          if (i===6) return c.firstChild.textContent; // Docs button
+          if (i===7) return c.firstChild.value;       // Select dropdown
+          return c.textContent.trim();
+        });
+        csv.push(cells.join(','));
+      });
+      let blob = new Blob([csv.join('\n')], {type:'text/csv'});
+      let a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'apples_to_apples.csv';
+      a.click();
+    }
+
+    function handleUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim());
+        tbody.innerHTML = '';
+        lines.slice(1).forEach(line => {
+          const [vendor, quote, deposit, start, completed, status, docs, decision, revised] = line.split(',');
+          addRow(vendor, quote, deposit, start, completed, status, docs, decision, revised);
+        });
+      };
+      reader.readAsText(file);
+    }
+
+    function resetSample() {
+      tbody.innerHTML = '';
+      addRow('EverOn', '54276.24', '0%', '2025-09-01', '2025-09-15', 'Turnkey install', '✅', 'Approved');
+      addRow('Simplex Repair', '23971.50', '0%', '2025-09-05', '', 'Repair only', '❌', 'On Hold');
+    }
+
+    // start with sample
+    resetSample();
+  </script>
+</body>
+</html>
