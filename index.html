@@ -3,143 +3,320 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apples to Apples</title>
-  <link rel="icon" href="icon.png" type="image/png">
-  <link rel="manifest" href="manifest.json">
+  <title>Apples to Apples – Standalone (Local/CSV/JSON)</title>
   <style>
-    body { font-family: system-ui, sans-serif; margin: 24px; background: #f8fafc; color: #0f172a; }
-    h1 { font-size: 22px; margin-bottom: 12px; }
-    .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin: 12px 0 16px; }
-    button { padding: 6px 10px; cursor: pointer; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff; }
-    button:hover { background: #f1f5f9; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e2e8f0; }
-    th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; text-align: left; }
-    th { background: #f1f5f9; }
-    td[contenteditable="true"] { background: #fff; }
-    .right { text-align: right; }
-    .center { text-align: center; }
-    select { padding: 4px; }
-    input[type="file"] { display:none; }
+    :root {
+      --bg: #0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --accent:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+    }
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1000px 600px at 10% -10%, #1f2937 0%, var(--bg) 45%),radial-gradient(1000px 600px at 100% 0%, #0b1220 0%, var(--bg) 55%);color:var(--text);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+    .container{max-width:1100px;margin:28px auto;padding:0 16px}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:12px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0));border:1px solid rgba(148,163,184,.15);border-radius:16px;padding:14px 16px;backdrop-filter:blur(6px);box-shadow:0 10px 30px rgba(2,6,23,.4)}
+    .title{display:flex;align-items:center;gap:10px;font-weight:700}
+    .title .dot{width:10px;height:10px;border-radius:999px;background:linear-gradient(135deg,var(--green),#4ade80);box-shadow:0 0 0 3px rgba(34,197,94,.15),0 0 24px var(--green)}
+    .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .btn{cursor:pointer;border:none;border-radius:12px;padding:9px 12px;font-weight:600;color:#0b1220;background:linear-gradient(135deg,#93c5fd,var(--accent))}
+    .btn.secondary{color:var(--text);background:linear-gradient(135deg,#334155,#1f2937);border:1px solid rgba(148,163,184,.25)}
+    .btn.ghost{background:transparent;color:var(--text);border:1px dashed rgba(148,163,184,.35)}
+    .btn.warn{color:#0b1220;background:linear-gradient(135deg,#fcd34d,var(--amber))}
+    .btn.danger{color:#fff;background:linear-gradient(135deg,#fb7185,var(--red))}
+    .card{background:rgba(2,6,23,.6);border:1px solid rgba(148,163,184,.15);border-radius:18px;padding:14px;box-shadow:0 20px 40px rgba(2,6,23,.5) inset,0 18px 50px rgba(2,6,23,.35)}
+    .grid{display:grid;gap:14px}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;background:#0b1220;z-index:2;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid rgba(148,163,184,.2);padding:10px}
+    tbody td{padding:12px 10px;border-bottom:1px solid rgba(148,163,184,.1)}
+    tbody tr:hover{background:rgba(148,163,184,.06)}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+    .badge.lowest{color:#052e16;background:linear-gradient(135deg,#86efac,#34d399);box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+    .hint{color:var(--muted);font-size:13px}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.3)}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .input{color:var(--text);background:#0b1220;border:1px solid rgba(148,163,184,.2);border-radius:12px;padding:9px 12px;outline:none}
+    .input:focus{box-shadow:0 0 0 2px rgba(96,165,250,.4)}
+    .drop{border:2px dashed rgba(148,163,184,.35);border-radius:14px;padding:14px;text-align:center}
+    .drop.drag{border-color:#93c5fd;background:rgba(147,197,253,.08)}
+    .footer{margin-top:10px;display:flex;justify-content:space-between;color:var(--muted);font-size:13px}
   </style>
 </head>
 <body>
-  <h1>Apples to Apples</h1>
+  <div class="container">
+    <div class="nav">
+      <div class="title"><span class="dot"></span><div>
+        <div style="font-size:20px">Apples to Apples <span style="color:#93c5fd">/ Standalone</span></div>
+        <small class="hint">No databases. Load CSV/JSON, work locally, export when done.</small>
+      </div></div>
+      <div class="controls">
+        <button id="btnImport" class="btn">Import CSV/JSON</button>
+        <button id="btnAddProject" class="btn secondary">New Project</button>
+        <button id="btnAddQuote" class="btn secondary">Add Quote</button>
+        <button id="btnExportCsv" class="btn ghost">Export CSV</button>
+        <button id="btnSaveJson" class="btn ghost">Save JSON</button>
+        <button id="btnClear" class="btn danger" title="Clear local data">Clear</button>
+      </div>
+    </div>
 
-  <div class="toolbar">
-    <button onclick="addRow()">Add Vendor Row</button>
-    <button onclick="document.getElementById('csvInput').click()">Upload CSV</button>
-    <input id="csvInput" type="file" accept=".csv" onchange="handleUpload(event)" />
-    <button onclick="exportCSV()">Export CSV</button>
-    <button onclick="resetSample()">Reset Sample</button>
+    <div class="grid" style="margin-top:14px;">
+      <section class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px;gap:10px;">
+          <div class="row">
+            <label for="projectSelect" class="hint">Project:</label>
+            <select id="projectSelect" class="input"></select>
+            <span class="pill" id="projectMeta">No project selected</span>
+          </div>
+          <div class="hint">Tip: Drag & drop a CSV file anywhere on this page to load quotes.</div>
+        </div>
+
+        <div id="drop" class="drop hint">Drop <strong>CSV</strong> (columns: project,vendor,quote,deposit,timeline,status,documents_complete) or <strong>JSON</strong> here, or use <em>Import</em>.</div>
+
+        <div class="card" style="background:#0b1220;border-color:rgba(148,163,184,.2);margin-top:12px;">
+          <div style="overflow:auto;max-height:62vh;">
+            <table id="quotesTable">
+              <thead>
+                <tr>
+                  <th>Vendor</th>
+                  <th>Quote</th>
+                  <th>Deposit</th>
+                  <th>Timeline</th>
+                  <th>Status</th>
+                  <th>Docs</th>
+                  <th>Badge</th>
+                  <th style="text-align:right;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="quotesBody">
+                <tr><td colspan="8" class="hint" style="padding:16px">Choose or create a project, then import or add quotes…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div id="status">Ready.</div>
+          <div class="hint">Next: one-click GitHub Pages deploy to share read-only.</div>
+        </div>
+      </section>
+    </div>
   </div>
 
-  <table id="vendorTable">
-    <thead>
-      <tr>
-        <th>Vendor Name</th>
-        <th>Quote</th>
-        <th>Requested Deposit</th>
-        <th>Project Start Date</th>
-        <th>Project Completed Date</th>
-        <th>Status</th>
-        <th>Docs</th>
-        <th>Project Decision</th>
-        <th>Revised Quote</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <input id="fileInput" type="file" accept=".csv,.json" style="display:none" />
+
+  <dialog id="dlgProject" style="background:#0b1220;border:1px solid rgba(148,163,184,.3);border-radius:16px;max-width:520px">
+    <form method="dialog" style="padding:16px;display:grid;gap:10px">
+      <h3 style="margin:0">New Project</h3>
+      <label>Name <input id="projName" class="input" required /></label>
+      <label>Description <input id="projDesc" class="input" /></label>
+      <menu style="display:flex;gap:8px;justify-content:flex-end;margin:0;padding:0">
+        <button value="cancel" class="btn secondary">Cancel</button>
+        <button id="projSave" value="default" class="btn">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="dlgQuote" style="background:#0b1220;border:1px solid rgba(148,163,184,.3);border-radius:16px;max-width:640px">
+    <form method="dialog" style="padding:16px;display:grid;gap:10px">
+      <h3 style="margin:0">Add Quote</h3>
+      <div class="row" style="gap:12px">
+        <label style="flex:1">Vendor <input id="qVendor" class="input" required /></label>
+        <label style="flex:1">Quote ($) <input id="qAmount" type="number" step="0.01" class="input" required /></label>
+      </div>
+      <div class="row" style="gap:12px">
+        <label style="flex:1">Deposit <input id="qDeposit" class="input" /></label>
+        <label style="flex:1">Timeline <input id="qTimeline" class="input" /></label>
+      </div>
+      <div class="row" style="gap:12px">
+        <label style="flex:1">Status <input id="qStatus" class="input" placeholder="e.g., pending" /></label>
+        <label style="flex:1">Docs Complete? <select id="qDocs" class="input"><option value="true">true</option><option value="false" selected>false</option></select></label>
+      </div>
+      <menu style="display:flex;gap:8px;justify-content:flex-end;margin:0;padding:0">
+        <button value="cancel" class="btn secondary">Cancel</button>
+        <button id="quoteSave" value="default" class="btn">Save</button>
+      </menu>
+    </form>
+  </dialog>
 
   <script>
-    const tbody = document.querySelector('#vendorTable tbody');
+    // ====== Local storage data model ======
+    // data = { projects: [ {id, name, description, awarded_quote_id|null} ], quotes: [ {id, project_id, vendor, amount, deposit, timeline, status, documents_complete} ] }
+    const KEY = 'apples2apples_data_v1';
+    let state = load();
 
-    function addRow(vendor='', quote='', deposit='', start='', completed='', status='', docs='❌', decision='On Hold', revised='') {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td contenteditable="true">${vendor}</td>
-        <td contenteditable="true" class="right">${quote}</td>
-        <td contenteditable="true" class="right">${deposit}</td>
-        <td contenteditable="true">${start}</td>
-        <td contenteditable="true">${completed}</td>
-        <td contenteditable="true">${status}</td>
-        <td class="center"><button onclick="toggleDocs(this)">${docs}</button></td>
-        <td>
-          <select>
-            <option ${decision==='Approved'?'selected':''}>Approved</option>
-            <option ${decision==='Denied'?'selected':''}>Denied</option>
-            <option ${decision==='On Hold'?'selected':''}>On Hold</option>
-          </select>
-        </td>
-        <td contenteditable="true" class="right">${revised}</td>
-        <td class="center">
-          <button onclick="applyRevised(this)">Apply Revised</button>
-          <button onclick="deleteRow(this)">Delete</button>
-        </td>
-      `;
-      tbody.appendChild(row);
+    function load(){
+      try{ return JSON.parse(localStorage.getItem(KEY)) || {projects:[], quotes:[]}; }catch(_) { return {projects:[], quotes:[]}; }
+    }
+    function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+    function uid(){ return Math.random().toString(36).slice(2,10); }
+
+    const $ = s=>document.querySelector(s), $$ = s=>Array.from(document.querySelectorAll(s));
+    const status = m=> $('#status').textContent = m;
+
+    // ====== UI helpers ======
+    function money(v){ if(v==null||v==='') return '—'; const n = Number(v); return isNaN(n)? String(v) : n.toLocaleString(undefined,{style:'currency',currency:'USD'}); }
+
+    function currentProject(){ const id = $('#projectSelect').value; return state.projects.find(p=>p.id===id)||null; }
+
+    function refreshProjects(selectId){
+      const sel = $('#projectSelect'); sel.innerHTML = '';
+      state.projects.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; sel.appendChild(o); });
+      if(state.projects.length){ sel.value = selectId || state.projects[0].id; }
+      const p = currentProject();
+      $('#projectMeta').textContent = p? (p.description||'No description') : 'No project selected';
     }
 
-    function toggleDocs(btn) {
-      btn.textContent = (btn.textContent === '❌') ? '✅' : '❌';
+    function projectQuotes(pid){ return state.quotes.filter(q=>q.project_id===pid).sort((a,b)=> (a.amount??Infinity) - (b.amount??Infinity)); }
+
+    function renderQuotes(){
+      const p = currentProject();
+      const tb = $('#quotesBody'); tb.innerHTML = '';
+      if(!p){ tb.innerHTML = '<tr><td colspan="8" class="hint" style="padding:16px">No project selected.</td></tr>'; return; }
+      const rows = projectQuotes(p.id);
+      if(!rows.length){ tb.innerHTML = '<tr><td colspan="8" class="hint" style="padding:16px">No quotes yet. Import CSV/JSON or click Add Quote.</td></tr>'; return; }
+      rows.forEach((q,i)=>{
+        const tr = document.createElement('tr');
+        const isLowest = i===0 && isFinite(q.amount);
+        const isAwarded = p.awarded_quote_id===q.id;
+        tr.innerHTML = `
+          <td>${q.vendor||'—'}</td>
+          <td>${money(q.amount)}</td>
+          <td>${q.deposit||'—'}</td>
+          <td>${q.timeline||'—'}</td>
+          <td>${q.status||'—'}</td>
+          <td>${q.documents_complete? '✅':'❌'}</td>
+          <td>${isLowest? '<span class="badge lowest">Lowest</span>':''} ${isAwarded? '<span class="badge" style="background:#93c5fd;color:#0b1220">Awarded</span>':''}</td>
+          <td style="text-align:right; display:flex; gap:6px; justify-content:flex-end">
+            <button class="btn warn" data-award="${q.id}">Award</button>
+            <button class="btn secondary" data-edit="${q.id}">Edit</button>
+            <button class="btn danger" data-del="${q.id}">Delete</button>
+          </td>`;
+        tb.appendChild(tr);
+      });
+
+      $$('[data-award]').forEach(b=> b.onclick = () => { const p=currentProject(); p.awarded_quote_id = b.getAttribute('data-award'); save(); renderQuotes(); status('Vendor awarded.'); });
+      $$('[data-del]').forEach(b=> b.onclick = () => { const id=b.getAttribute('data-del'); state.quotes = state.quotes.filter(x=>x.id!==id); save(); renderQuotes(); status('Quote deleted.');});
+      $$('[data-edit]').forEach(b=> b.onclick = () => editQuote(b.getAttribute('data-edit')));
     }
 
-    function applyRevised(btn) {
-      const row = btn.closest('tr');
-      const revised = row.cells[8].textContent.trim();
-      if (revised) {
-        row.cells[1].textContent = revised; // overwrite Quote
-        row.cells[8].textContent = ''; // clear Revised Quote
+    function editQuote(id){
+      const q = state.quotes.find(x=>x.id===id); if(!q) return;
+      $('#qVendor').value = q.vendor||''; $('#qAmount').value = q.amount||''; $('#qDeposit').value = q.deposit||''; $('#qTimeline').value = q.timeline||''; $('#qStatus').value = q.status||''; $('#qDocs').value = String(!!q.documents_complete);
+      const dlg = $('#dlgQuote');
+      dlg.showModal();
+      $('#quoteSave').onclick = (e)=>{
+        e.preventDefault();
+        q.vendor = $('#qVendor').value.trim();
+        q.amount = Number($('#qAmount').value||0);
+        q.deposit = $('#qDeposit').value.trim();
+        q.timeline = $('#qTimeline').value.trim();
+        q.status = $('#qStatus').value.trim();
+        q.documents_complete = $('#qDocs').value === 'true';
+        save(); dlg.close(); renderQuotes(); status('Quote updated.');
+      };
+    }
+
+    // ====== CSV / JSON import & export ======
+    function parseCSV(text){
+      // Simple CSV parser (no quoted commas inside fields). Good enough for our use-case.
+      const lines = text.trim().split(/\r?\n/);
+      if(!lines.length) return [];
+      const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+      const idx = h=> headers.indexOf(h);
+      const out = [];
+      for(let i=1;i<lines.length;i++){
+        const cells = lines[i].split(',');
+        const obj = {
+          project: cells[idx('project')]?.trim(),
+          vendor: cells[idx('vendor')]?.trim(),
+          amount: Number(cells[idx('quote')]||cells[idx('amount')]||0),
+          deposit: cells[idx('deposit')]?.trim(),
+          timeline: cells[idx('timeline')]?.trim(),
+          status: cells[idx('status')]?.trim(),
+          documents_complete: String(cells[idx('documents_complete')]||'').toLowerCase().includes('t') || String(cells[idx('documents_complete')]||'').toLowerCase()==='true'
+        };
+        out.push(obj);
+      }
+      return out;
+    }
+
+    function importJSON(obj){
+      // expects {projects:[...], quotes:[...]}
+      if(obj.projects && obj.quotes){ state = obj; save(); refreshProjects(); renderQuotes(); status('JSON loaded.'); return; }
+      // or expects array of quotes with a single project
+      if(Array.isArray(obj)){
+        const projName = prompt('Project name for imported quotes?');
+        if(!projName) return;
+        const p = {id:uid(), name:projName, description:'Imported', awarded_quote_id:null};
+        state.projects.push(p);
+        obj.forEach(r=> state.quotes.push({ id:uid(), project_id:p.id, vendor:r.vendor||'', amount:Number(r.amount||0), deposit:r.deposit||'', timeline:r.timeline||'', status:r.status||'', documents_complete:!!r.documents_complete }));
+        save(); refreshProjects(p.id); renderQuotes(); status('JSON quotes imported.');
       }
     }
 
-    function deleteRow(btn) {
-      btn.closest('tr').remove();
-    }
-
-    function exportCSV() {
-      let csv = [];
-      const headers = [...document.querySelectorAll('#vendorTable th')].map(h => h.textContent.trim());
-      csv.push(headers.join(','));
-      [...tbody.rows].forEach(r => {
-        let cells = [...r.cells].map((c,i) => {
-          if (i===6) return c.firstChild.textContent; // Docs button
-          if (i===7) return c.firstChild.value;       // Select dropdown
-          return c.textContent.trim();
-        });
-        csv.push(cells.join(','));
+    function importCSVRows(rows){
+      // rows = [{project,vendor,amount,deposit,timeline,status,documents_complete}]
+      // group by project
+      const by = {};
+      rows.forEach(r=>{ const k=(r.project||'General'); (by[k]||(by[k]=[])).push(r); });
+      Object.entries(by).forEach(([name, list])=>{
+        let p = state.projects.find(x=>x.name===name);
+        if(!p){ p = {id:uid(), name, description:'Imported from CSV', awarded_quote_id:null}; state.projects.push(p); }
+        list.forEach(r=> state.quotes.push({ id:uid(), project_id:p.id, vendor:r.vendor||'', amount:Number(r.amount||0), deposit:r.deposit||'', timeline:r.timeline||'', status:r.status||'', documents_complete:!!r.documents_complete }));
       });
-      let blob = new Blob([csv.join('\n')], {type:'text/csv'});
-      let a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'apples_to_apples.csv';
-      a.click();
+      save(); refreshProjects(); renderQuotes(); status('CSV imported.');
     }
 
-    function handleUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim());
-        tbody.innerHTML = '';
-        lines.slice(1).forEach(line => {
-          const [vendor, quote, deposit, start, completed, status, docs, decision, revised] = line.split(',');
-          addRow(vendor, quote, deposit, start, completed, status, docs, decision, revised);
-        });
+    function exportCSV(){
+      const p = currentProject(); if(!p){ alert('Select a project first.'); return; }
+      const rows = [['Vendor','Quote','Deposit','Timeline','Status','Documents Complete']];
+      projectQuotes(p.id).forEach(q=> rows.push([q.vendor, q.amount, q.deposit||'', q.timeline||'', q.status||'', q.documents_complete?'true':'false']));
+      const csv = rows.map(r=> r.map(x=> String(x).includes(',')?`"${String(x).replaceAll('"','""')}"`:String(x)).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv'}); const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = (p.name.replace(/\s+/g,'_'))+"_quotes.csv"; a.click();
+    }
+
+    function saveJSON(){
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'apples_to_apples_data.json'; a.click();
+    }
+
+    // ====== Event wiring ======
+    $('#btnImport').onclick = ()=> $('#fileInput').click();
+    $('#fileInput').onchange = (e)=> handleFiles(e.target.files);
+
+    function handleFiles(files){
+      if(!files||!files.length) return; const f = files[0]; const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          if(f.name.toLowerCase().endsWith('.json')){ importJSON(JSON.parse(reader.result)); }
+          else { importCSVRows(parseCSV(reader.result)); }
+        }catch(err){ console.error(err); alert('Import failed: '+err.message); }
       };
-      reader.readAsText(file);
+      reader.readAsText(f);
     }
 
-    function resetSample() {
-      tbody.innerHTML = '';
-      addRow('EverOn', '54276.24', '0%', '2025-09-01', '2025-09-15', 'Turnkey install', '✅', 'Approved');
-      addRow('Simplex Repair', '23971.50', '0%', '2025-09-05', '', 'Repair only', '❌', 'On Hold');
-      addRow('Local Alarm Co.', '50890.00', '25%', '2025-09-08', '', 'Install; excludes devices', '✅', 'On Hold');
-    }
+    // Drag & drop
+    const drop = $('#drop');
+    ;['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('drag'); }));
+    ;['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', e=>{ const files = e.dataTransfer.files; handleFiles(files); });
 
-    // start with sample
-    resetSample();
+    // Projects
+    $('#btnAddProject').onclick = ()=>{ $('#projName').value=''; $('#projDesc').value=''; $('#dlgProject').showModal(); };
+    $('#projSave').onclick = (e)=>{
+      e.preventDefault();
+      const p = { id:uid(), name:$('#projName').value.trim(), description:$('#projDesc').value.trim(), awarded_quote_id:null };
+      if(!p.name){ alert('Project name required'); return; }
+      state.projects.unshift(p); save(); $('#dlgProject').close(); refreshProjects(p.id); renderQuotes(); status('Project created.');
+    };
+
+    // Quotes
+    $('#btnAddQuote').onclick = ()=>{ if(!currentProject()){ alert('Create or select a project first.'); return; } $('#qVendor').value=''; $('#qAmount').value=''; $('#qDeposit').value=''; $('#qTimeline').value=''; $('#qStatus').value=''; $('#qDocs').value='false'; $('#dlgQuote').showModal(); };
+    $('#quoteSave').onclick = (e)=>{ e.preventDefault(); const p=currentProject(); if(!p) return; const q={ id:uid(), project_id:p.id, vendor:$('#qVendor').value.trim(), amount:Number($('#qAmount').value||0), deposit:$('#qDeposit').value.trim(), timeline:$('#qTimeline').value.trim(), status:$('#qStatus').value.trim(), documents_complete:($('#qDocs').value==='true') }; state.quotes.push(q); save(); $('#dlgQuote').close(); renderQuotes(); status('Quote added.'); };
+
+    // Exports & clear
+    $('#btnExportCsv').onclick = exportCSV; $('#btnSaveJson').onclick = saveJSON; $('#btnClear').onclick = ()=>{ if(confirm('This will clear all locally stored data for this app on this device. Continue?')){ localStorage.removeItem(KEY); state=load(); refreshProjects(); renderQuotes(); status('Local data cleared.'); } };
+
+    // Init
+    function boot(){ refreshProjects(); renderQuotes(); }
+    boot();
   </script>
 </body>
 </html>
