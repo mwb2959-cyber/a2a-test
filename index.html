@@ -5,11 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apples to Apples – Standalone (Local/CSV/JSON)</title>
   <style>
-    :root {
-      --bg: #0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb;
-      --accent:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
-    }
-    body {margin:0; font-family:system-ui,sans-serif; background:#0f172a; color:var(--text);}
+    :root { --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --accent:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; }
+    body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); }
     .nav{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:#111827;color:white}
     .btn{cursor:pointer;border:none;border-radius:12px;padding:8px 12px;font-weight:600;margin-left:6px}
     .btn.secondary{background:#334155;color:var(--text)}
@@ -64,62 +61,89 @@
 
   <input id="fileInput" type="file" accept=".csv,.json" style="display:none"/>
 
+  <!-- New Project Dialog (no required attributes so Cancel always works) -->
   <dialog id="dlgProject">
     <form method="dialog" style="padding:1rem;display:grid;gap:10px">
       <h3>New Project</h3>
-      <input id="projName" placeholder="Project name" required>
+      <input id="projName" placeholder="Project name">
       <input id="projDesc" placeholder="Description">
       <menu style="display:flex;gap:8px;justify-content:flex-end">
-        <button value="cancel" class="btn secondary">Cancel</button>
+        <button value="cancel" class="btn secondary" id="projCancel">Cancel</button>
         <button id="projSave" value="default" class="btn">Save</button>
       </menu>
     </form>
   </dialog>
 
+  <!-- Add/Edit Quote Dialog (no required attributes so Cancel always works) -->
   <dialog id="dlgQuote">
     <form method="dialog" style="padding:1rem;display:grid;gap:10px">
       <h3>Add Quote</h3>
-      <input id="qVendor" placeholder="Vendor" required>
-      <input id="qAmount" type="number" step="0.01" placeholder="Quote ($)" required>
+      <input id="qVendor" placeholder="Vendor">
+      <input id="qAmount" type="number" step="0.01" placeholder="Quote ($)">
       <input id="qDeposit" placeholder="Deposit">
       <input id="qTimeline" placeholder="Timeline">
       <input id="qStatus" placeholder="Status">
       <select id="qDocs"><option value="true">Docs Complete</option><option value="false" selected>Docs Incomplete</option></select>
       <menu style="display:flex;gap:8px;justify-content:flex-end">
-        <button value="cancel" class="btn secondary">Cancel</button>
+        <button value="cancel" class="btn secondary" id="quoteCancel">Cancel</button>
         <button id="quoteSave" value="default" class="btn">Save</button>
       </menu>
     </form>
   </dialog>
 
   <script>
+    // ===== State =====
     const KEY='a2a_data_v1'; let state=load();
-    function load(){try{return JSON.parse(localStorage.getItem(KEY))||{projects:[],quotes:[]};}catch{return{projects:[],quotes:[]};}}
-    function save(){localStorage.setItem(KEY,JSON.stringify(state));}
-    function uid(){return Math.random().toString(36).slice(2,9);}
-    const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
-    function status(m){$('#status').textContent=m;}
-    function money(v){if(v==null||v==='')return'—';const n=+v;return isNaN(n)?v:n.toLocaleString(undefined,{style:'currency',currency:'USD'});}
-    function currentProject(){return state.projects.find(p=>p.id==$('#projectSelect').value);}
-    function refreshProjects(selId){const s=$('#projectSelect');s.innerHTML='';state.projects.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;s.appendChild(o);});if(state.projects.length)s.value=selId||state.projects[0].id;}
-    function projectQuotes(pid){return state.quotes.filter(q=>q.project_id==pid).sort((a,b)=>(a.amount??Infinity)-(b.amount??Infinity));}
-    function renderQuotes(){const p=currentProject();const tb=$('#quotesBody');tb.innerHTML='';if(!p){tb.innerHTML='<tr><td colspan=8>No project</td></tr>';return;}const rows=projectQuotes(p.id);if(!rows.length){tb.innerHTML='<tr><td colspan=8>No quotes</td></tr>';return;}rows.forEach((q,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${q.vendor}</td><td>${money(q.amount)}</td><td>${q.deposit||'—'}</td><td>${q.timeline||'—'}</td><td>${q.status||'—'}</td><td>${q.documents_complete?'✅':'❌'}</td><td>${i===0?'<span class=\"badge lowest\">Lowest</span>':''}${p.awarded_quote_id===q.id?'<span class=\"badge\" style=\"background:#93c5fd;color:#111827\">Awarded</span>':''}</td><td><button class=\"btn warn\" data-award=\"${q.id}\">Award</button><button class=\"btn secondary\" data-edit=\"${q.id}\">Edit</button><button class=\"btn danger\" data-del=\"${q.id}\">Del</button></td>`;tb.appendChild(tr);});$$('[data-award]').forEach(b=>b.onclick=()=>{p.awarded_quote_id=b.dataset.award;save();renderQuotes();status('Awarded.');});$$('[data-del]').forEach(b=>b.onclick=()=>{state.quotes=state.quotes.filter(x=>x.id!==b.dataset.del);save();renderQuotes();status('Deleted.');});$$('[data-edit]').forEach(b=>b.onclick=()=>editQuote(b.dataset.edit));}
-    function editQuote(id){const q=state.quotes.find(x=>x.id===id);if(!q)return;$('#qVendor').value=q.vendor;$('#qAmount').value=q.amount;$('#qDeposit').value=q.deposit;$('#qTimeline').value=q.timeline;$('#qStatus').value=q.status;$('#qDocs').value=String(q.documents_complete);const d=$('#dlgQuote');d.showModal();$('#quoteSave').onclick=e=>{e.preventDefault();q.vendor=$('#qVendor').value;q.amount=+$('#qAmount').value;q.deposit=$('#qDeposit').value;q.timeline=$('#qTimeline').value;q.status=$('#qStatus').value;q.documents_complete=$('#qDocs').value==='true';save();d.close();renderQuotes();};}
-    $('#btnAddProject').onclick=()=>{$('#projName').value='';$('#projDesc').value='';$('#dlgProject').showModal();};
-    $('#projSave').onclick=e=>{e.preventDefault();const p={id:uid(),name:$('#projName').value,description:$('#projDesc').value,awarded_quote_id:null};state.projects.push(p);save();$('#dlgProject').close();refreshProjects(p.id);renderQuotes();};
-    $('#btnAddQuote').onclick=()=>{if(!currentProject())return alert('Add a project first');$('#qVendor').value='';$('#qAmount').value='';$('#qDeposit').value='';$('#qTimeline').value='';$('#qStatus').value='';$('#qDocs').value='false';$('#dlgQuote').showModal();};
-    $('#quoteSave').onclick=e=>{e.preventDefault();const p=currentProject();const q={id:uid(),project_id:p.id,vendor:$('#qVendor').value,amount:+$('#qAmount').value,deposit:$('#qDeposit').value,timeline:$('#qTimeline').value,status:$('#qStatus').value,documents_complete:$('#qDocs').value==='true'};state.quotes.push(q);save();$('#dlgQuote').close();renderQuotes();};
-    $('#btnExportCsv').onclick=()=>{const p=currentProject();if(!p)return;const rows=[['Vendor','Quote','Deposit','Timeline','Status','Docs']];projectQuotes(p.id).forEach(q=>rows.push([q.vendor,q.amount,q.deposit,q.timeline,q.status,q.documents_complete]));const csv=rows.map(r=>r.join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=p.name+'_quotes.csv';a.click();};
-    $('#btnSaveJson').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='a2a_data.json';a.click();};
-    $('#btnClear').onclick=()=>{if(confirm('Clear all local data?')){localStorage.removeItem(KEY);state=load();refreshProjects();renderQuotes();}};
-    function parseCSV(txt){const l=txt.trim().split(/\\r?\\n/);const h=l[0].split(',').map(x=>x.trim().toLowerCase());const idx=k=>h.indexOf(k);const arr=[];for(let i=1;i<l.length;i++){const c=l[i].split(',');arr.push({project:c[idx('project')]||'General',vendor:c[idx('vendor')]||'',amount:+(c[idx('quote')]||0),deposit:c[idx('deposit')]||'',timeline:c[idx('timeline')]||'',status:c[idx('status')]||'',documents_complete:(c[idx('documents_complete')]||'').toLowerCase()==='true'});}return arr;}
-    function importCSV(rows){rows.forEach(r=>{let p=state.projects.find(x=>x.name===r.project);if(!p){p={id:uid(),name:r.project,description:'',awarded_quote_id:null};state.projects.push(p);}state.quotes.push({id:uid(),project_id:p.id,vendor:r.vendor,amount:r.amount,deposit:r.deposit,timeline:r.timeline,status:r.status,documents_complete:r.documents_complete});});save();refreshProjects();renderQuotes();}
-    function importJSON(obj){if(obj.projects&&obj.quotes){state=obj;save();refreshProjects();renderQuotes();}else if(Array.isArray(obj)){const name=prompt('Project name for imported quotes?')||'Imported';const p={id:uid(),name,description:'',awarded_quote_id:null};state.projects.push(p);obj.forEach(r=>state.quotes.push({id:uid(),project_id:p.id,vendor:r.vendor,amount:+r.amount,deposit:r.deposit,timeline:r.timeline,status:r.status,documents_complete:!!r.documents_complete}));save();refreshProjects(p.id);renderQuotes();}}
-    $('#btnImport').onclick=()=>$('#fileInput').click();
-    $('#fileInput').onchange=e=>handleFiles(e.target.files);
-    function handleFiles(f){if(!f.length)return;const r=new FileReader();r.onload=()=>{try{if(f[0].name.endsWith('.json'))importJSON(JSON.parse(r.result));else importCSV(parseCSV(r.result));status('Imported.');}catch(err){alert('Import failed:'+err);}};r.readAsText(f[0]);}
-    const drop=$('#drop');['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag');}));['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag');}));drop.addEventListener('drop',e=>handleFiles(e.dataTransfer.files));
-    function boot(){refreshProjects();renderQuotes();}
+    function load(){ try{return JSON.parse(localStorage.getItem(KEY))||{projects:[],quotes:[]};}catch{return{projects:[],quotes:[]};} }
+    function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+    function uid(){ return Math.random().toString(36).slice(2,9); }
+
+    const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+    function setStatus(m){ $('#status').textContent=m; }
+    function money(v){ if(v==null||v==='') return '—'; const n=+v; return isNaN(n)? v : n.toLocaleString(undefined,{style:'currency',currency:'USD'}); }
+    function currentProject(){ return state.projects.find(p=>p.id===$('#projectSelect').value); }
+
+    // ===== Projects UI =====
+    function refreshProjects(selId){ const s=$('#projectSelect'); s.innerHTML=''; state.projects.forEach(p=>{const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; s.appendChild(o);}); if(state.projects.length) s.value=selId||state.projects[0].id; }
+    function projectQuotes(pid){ return state.quotes.filter(q=>q.project_id===pid).sort((a,b)=>(a.amount??Infinity)-(b.amount??Infinity)); }
+
+    function renderQuotes(){ const p=currentProject(); const tb=$('#quotesBody'); tb.innerHTML=''; if(!p){ tb.innerHTML='<tr><td colspan=8 class="hint">No project selected</td></tr>'; return; } const rows=projectQuotes(p.id); if(!rows.length){ tb.innerHTML='<tr><td colspan=8 class="hint">No quotes</td></tr>'; return; } rows.forEach((q,i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${q.vendor||'—'}</td><td>${money(q.amount)}</td><td>${q.deposit||'—'}</td><td>${q.timeline||'—'}</td><td>${q.status||'—'}</td><td>${q.documents_complete?'✅':'❌'}</td><td>${i===0?'<span class="badge lowest">Lowest</span>':''}${(currentProject().awarded_quote_id===q.id)?' <span class="badge" style="background:#93c5fd;color:#111827">Awarded</span>':''}</td><td><button class="btn warn" data-award="${q.id}">Award</button><button class="btn secondary" data-edit="${q.id}">Edit</button><button class="btn danger" data-del="${q.id}">Del</button></td>`; tb.appendChild(tr); }); $$('[data-award]').forEach(b=> b.onclick=()=>{ const p=currentProject(); p.awarded_quote_id=b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); }); $$('[data-del]').forEach(b=> b.onclick=()=>{ state.quotes = state.quotes.filter(x=> x.id !== b.dataset.del); save(); renderQuotes(); setStatus('Deleted.'); }); $$('[data-edit]').forEach(b=> b.onclick=()=> editQuote(b.dataset.edit)); }
+
+    function editQuote(id){ const q=state.quotes.find(x=>x.id===id); if(!q) return; $('#qVendor').value=q.vendor||''; $('#qAmount').value=q.amount??''; $('#qDeposit').value=q.deposit||''; $('#qTimeline').value=q.timeline||''; $('#qStatus').value=q.status||''; $('#qDocs').value=String(!!q.documents_complete); const d=$('#dlgQuote'); d.showModal(); $('#quoteSave').onclick=(e)=>{ e.preventDefault(); // Validate on save
+        const vendor=$('#qVendor').value.trim(); const amountRaw=$('#qAmount').value.trim(); if(!vendor){ alert('Vendor is required.'); return; } if(amountRaw===''|| isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
+        q.vendor=vendor; q.amount=Number(amountRaw); q.deposit=$('#qDeposit').value.trim(); q.timeline=$('#qTimeline').value.trim(); q.status=$('#qStatus').value.trim(); q.documents_complete=($('#qDocs').value==='true'); save(); d.close(); renderQuotes(); setStatus('Quote updated.'); };
+    }
+
+    // ===== Import/Export =====
+    function csvEscape(v){ const s=String(v ?? ''); return (s.includes('"')||s.includes(',')||s.includes('\n')) ? '"'+s.replace(/"/g,'""')+'"' : s; }
+    function exportCSV(){ const p=currentProject(); if(!p){ alert('Select a project first.'); return; } const list=projectQuotes(p.id); if(!list.length){ alert('No quotes to export for this project.'); return; } const rows=[[ 'Vendor','Quote','Deposit','Timeline','Status','Docs' ]]; list.forEach(q=>{ const amount=(q.amount!==undefined && q.amount!==null && q.amount!=='') ? q.amount : ''; rows.push([ q.vendor||'', amount, q.deposit||'', q.timeline||'', q.status||'', q.documents_complete?'TRUE':'FALSE' ]); }); const csv=rows.map(r=> r.map(csvEscape).join(',')).join('\r\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=(p.name.replace(/\s+/g,'_'))+'_quotes.csv'; a.click(); }
+
+    function parseCSV(txt){ const l=txt.trim().split(/\r?\n/); if(!l.length) return []; const h=l[0].split(',').map(x=>x.trim().toLowerCase()); const idx=k=>h.indexOf(k); const arr=[]; for(let i=1;i<l.length;i++){ const c=l[i].split(','); arr.push({ project:c[idx('project')]||'General', vendor:c[idx('vendor')]||'', amount:+(c[idx('quote')]||c[idx('amount')]||0), deposit:c[idx('deposit')]||'', timeline:c[idx('timeline')]||'', status:c[idx('status')]||'', documents_complete:(c[idx('documents_complete')]||'').toLowerCase()==='true' }); } return arr; }
+    function importCSV(rows){ rows.forEach(r=>{ let p=state.projects.find(x=>x.name===r.project); if(!p){ p={id:uid(),name:r.project,description:'Imported from CSV',awarded_quote_id:null}; state.projects.push(p);} state.quotes.push({ id:uid(), project_id:p.id, vendor:r.vendor, amount:r.amount, deposit:r.deposit, timeline:r.timeline, status:r.status, documents_complete: !!r.documents_complete }); }); save(); refreshProjects(); renderQuotes(); setStatus('CSV imported.'); }
+    function importJSON(obj){ if(obj.projects && obj.quotes){ state=obj; save(); refreshProjects(); renderQuotes(); setStatus('JSON loaded.'); return; } if(Array.isArray(obj)){ const name=prompt('Project name for imported quotes?')||'Imported'; const p={id:uid(),name,description:'Imported JSON',awarded_quote_id:null}; state.projects.push(p); obj.forEach(r=> state.quotes.push({ id:uid(), project_id:p.id, vendor:r.vendor||'', amount:+(r.amount||0), deposit:r.deposit||'', timeline:r.timeline||'', status:r.status||'', documents_complete: !!r.documents_complete })); save(); refreshProjects(p.id); renderQuotes(); setStatus('JSON quotes imported.'); } }
+
+    // ===== Events =====
+    $('#btnImport').onclick=()=> $('#fileInput').click();
+    $('#fileInput').onchange=(e)=> handleFiles(e.target.files);
+    function handleFiles(files){ if(!files||!files.length) return; const f=files[0]; const reader=new FileReader(); reader.onload=()=>{ try{ if(f.name.toLowerCase().endsWith('.json')) importJSON(JSON.parse(reader.result)); else importCSV(parseCSV(reader.result)); }catch(err){ alert('Import failed: '+err.message); } }; reader.readAsText(f); }
+
+    const drop=$('#drop'); ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('drag'); })); ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag'); })); drop.addEventListener('drop', e=> handleFiles(e.dataTransfer.files));
+
+    // Project dialog
+    $('#btnAddProject').onclick=()=>{ $('#projName').value=''; $('#projDesc').value=''; $('#dlgProject').showModal(); };
+    $('#projSave').onclick=(e)=>{ e.preventDefault(); const name=$('#projName').value.trim(); if(!name){ alert('Project name is required.'); return; } const p={ id:uid(), name, description:$('#projDesc').value.trim(), awarded_quote_id:null }; state.projects.unshift(p); save(); $('#dlgProject').close(); refreshProjects(p.id); renderQuotes(); setStatus('Project created.'); };
+
+    // Quote dialog
+    $('#btnAddQuote').onclick=()=>{ if(!currentProject()){ alert('Create or select a project first.'); return; } $('#qVendor').value=''; $('#qAmount').value=''; $('#qDeposit').value=''; $('#qTimeline').value=''; $('#qStatus').value=''; $('#qDocs').value='false'; $('#dlgQuote').showModal(); };
+    $('#quoteSave').onclick=(e)=>{ e.preventDefault(); const p=currentProject(); if(!p) return; const vendor=$('#qVendor').value.trim(); const amountRaw=$('#qAmount').value.trim(); if(!vendor){ alert('Vendor is required.'); return; } if(amountRaw==='' || isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; } const q={ id:uid(), project_id:p.id, vendor, amount:Number(amountRaw), deposit:$('#qDeposit').value.trim(), timeline:$('#qTimeline').value.trim(), status:$('#qStatus').value.trim(), documents_complete:($('#qDocs').value==='true') }; state.quotes.push(q); save(); $('#dlgQuote').close(); renderQuotes(); setStatus('Quote added.'); };
+
+    // Exports & clear
+    $('#btnExportCsv').onclick=exportCSV;
+    $('#btnSaveJson').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})); a.download='a2a_data.json'; a.click(); };
+    $('#btnClear').onclick=()=>{ if(confirm('Clear all local data?')){ localStorage.removeItem(KEY); state=load(); refreshProjects(); renderQuotes(); setStatus('Local data cleared.'); } };
+
+    // Init
+    function boot(){ refreshProjects(); renderQuotes(); }
     boot();
   </script>
 </body>
