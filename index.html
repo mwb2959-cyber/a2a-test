@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apples to Apples</title>
   <style>
-    :root { --bg:#1e293b; --panel:#f1f5f9; --muted:#475569; --text:#0f172a; --accent:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; }
+    :root { --bg:#0a2540; --panel:#f1f5f9; --muted:#475569; --text:#0f172a; --accent:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; }
     body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); }
     .nav{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:var(--panel);color:var(--text);font-weight:600}
     .btn{cursor:pointer;border:none;border-radius:12px;padding:8px 12px;font-weight:600;margin-left:6px}
@@ -34,7 +34,7 @@
       <button id="btnAddQuote" class="btn secondary">Add Quote</button>
       <button id="btnExportCsv" class="btn ghost">Export</button>
       <button id="btnSaveJson" class="btn ghost">Save</button>
-      <button id="btnClear" class="btn danger">Clear</button>
+      <button id="btnClear" class="btn danger">Clear All</button>
     </div>
   </div>
 
@@ -105,13 +105,13 @@
 
     const $ = s => document.querySelector(s);
     const $$ = s => Array.from(document.querySelectorAll(s));
-    function setStatus(m){ $('#status').textContent = m; }
+    function setStatus(m){ const el=document.getElementById('status'); if(el) el.textContent = m; }
     function money(v){ if(v==null||v==='') return '—'; const n=+v; return isNaN(n)? v : n.toLocaleString(undefined,{style:'currency',currency:'USD'}); }
-    function currentProject(){ return state.projects.find(p => p.id === $('#projectSelect').value); }
+    function currentProject(){ return state.projects.find(p => p.id === document.getElementById('projectSelect').value); }
 
     // ===== Projects / Quotes UI =====
     function refreshProjects(selId){
-      const s = $('#projectSelect');
+      const s = document.getElementById('projectSelect');
       s.innerHTML='';
       state.projects.forEach(p=>{
         const o=document.createElement('option');
@@ -127,7 +127,7 @@
 
     function renderQuotes(){
       const p = currentProject();
-      const tb = $('#quotesBody');
+      const tb = document.getElementById('quotesBody');
       tb.innerHTML='';
       if(!p){ tb.innerHTML = '<tr><td colspan=8 class="hint">No project selected</td></tr>'; return; }
       const rows = projectQuotes(p.id);
@@ -150,34 +150,34 @@
         tb.appendChild(tr);
       });
 
-      $$('[data-award]').forEach(b=> b.onclick = () => { p.awarded_quote_id = b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); });
-      $$('[data-del]').forEach(b=> b.onclick = () => { state.quotes = state.quotes.filter(x=> x.id !== b.dataset.del); save(); renderQuotes(); setStatus('Deleted.'); });
-      $$('[data-edit]').forEach(b=> b.onclick = () => editQuote(b.dataset.edit));
+      document.querySelectorAll('[data-award]').forEach(b=> b.onclick = () => { p.awarded_quote_id = b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); });
+      document.querySelectorAll('[data-del]').forEach(b=> b.onclick = () => { state.quotes = state.quotes.filter(x=> x.id !== b.dataset.del); save(); renderQuotes(); setStatus('Deleted.'); });
+      document.querySelectorAll('[data-edit]').forEach(b=> b.onclick = () => editQuote(b.dataset.edit));
     }
 
     function editQuote(id){
       const q = state.quotes.find(x=>x.id===id); if(!q) return;
-      $('#qVendor').value = q.vendor||'';
-      $('#qAmount').value = q.amount??'';
-      $('#qDeposit').value = q.deposit||'';
-      $('#qTimeline').value = q.timeline||'';
-      $('#qStatus').value = q.status||'';
-      $('#qDocs').value = String(!!q.documents_complete);
-      const d = $('#dlgQuote');
+      document.getElementById('qVendor').value = q.vendor||'';
+      document.getElementById('qAmount').value = q.amount??'';
+      document.getElementById('qDeposit').value = q.deposit||'';
+      document.getElementById('qTimeline').value = q.timeline||'';
+      document.getElementById('qStatus').value = q.status||'';
+      document.getElementById('qDocs').value = String(!!q.documents_complete);
+      const d = document.getElementById('dlgQuote');
       d.showModal();
-      $('#quoteCancel').onclick = () => d.close();
-      $('#quoteSave').onclick = (e) => {
+      document.getElementById('quoteCancel').onclick = () => d.close();
+      document.getElementById('quoteSave').onclick = (e) => {
         e.preventDefault();
-        const vendor = $('#qVendor').value.trim();
-        const amountRaw = $('#qAmount').value.trim();
+        const vendor = document.getElementById('qVendor').value.trim();
+        const amountRaw = document.getElementById('qAmount').value.trim();
         if(!vendor){ alert('Vendor is required.'); return; }
         if(amountRaw==='' || isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
         q.vendor = vendor;
         q.amount = Number(amountRaw);
-        q.deposit = $('#qDeposit').value.trim();
-        q.timeline = $('#qTimeline').value.trim();
-        q.status = $('#qStatus').value.trim();
-        q.documents_complete = ($('#qDocs').value === 'true');
+        q.deposit = document.getElementById('qDeposit').value.trim();
+        q.timeline = document.getElementById('qTimeline').value.trim();
+        q.status = document.getElementById('qStatus').value.trim();
+        q.documents_complete = (document.getElementById('qDocs').value === 'true');
         save(); d.close(); renderQuotes(); setStatus('Quote updated.');
       };
     }
@@ -198,7 +198,7 @@
       const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-      a.download = (p.name.replace(/\s+/g,'_')) + '_quotes.csv';
+      a.download = (currentProject().name.replace(/\s+/g,'_')) + '_quotes.csv';
       a.click();
     }
 
@@ -241,8 +241,8 @@
     }
 
     // ===== File + Drag & Drop =====
-    $('#btnImport').onclick = () => $('#fileInput').click();
-    $('#fileInput').onchange = (e) => handleFiles(e.target.files);
+    document.getElementById('btnImport').onclick = () => document.getElementById('fileInput').click();
+    document.getElementById('fileInput').onchange = (e) => handleFiles(e.target.files);
     function handleFiles(files){
       if(!files || !files.length) return;
       const f = files[0]; const reader = new FileReader();
@@ -255,35 +255,68 @@
       reader.readAsText(f);
     }
 
-    const drop = $('#drop');
+    const drop = document.getElementById('drop');
     ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('drag'); }));
-    ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
+    ['dragleave','drop'].forEach	ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
     drop.addEventListener('drop', e=> handleFiles(e.dataTransfer.files));
 
     // ===== Project Dialog =====
-    $('#btnAddProject').onclick = () => {
-      $('#projName').value=''; $('#projDesc').value='';
-      const d = $('#dlgProject'); d.showModal();
-      $('#projCancel').onclick = () => d.close();
-      $('#projSave').onclick = () => {
-        const name = $('#projName').value.trim();
+    document.getElementById('btnAddProject').onclick = () => {
+      document.getElementById('projName').value='';
+      document.getElementById('projDesc').value='';
+      const d = document.getElementById('dlgProject'); d.showModal();
+      document.getElementById('projCancel').onclick = () => d.close();
+      document.getElementById('projSave').onclick = () => {
+        const name = document.getElementById('projName').value.trim();
         if(!name){ alert('Project name is required.'); return; }
-        const p = { id:uid(), name, description:$('#projDesc').value.trim(), awarded_quote_id:null };
+        const p = { id:uid(), name, description:document.getElementById('projDesc').value.trim(), awarded_quote_id:null };
         state.projects.unshift(p); save(); d.close(); refreshProjects(p.id); renderQuotes(); setStatus('Project created.');
       };
     };
 
     // ===== Quote Dialog =====
-    $('#btnAddQuote').onclick = () => {
+    document.getElementById('btnAddQuote').onclick = () => {
       if(!currentProject()){ alert('Create or select a project first.'); return; }
-      $('#qVendor').value=''; $('#qAmount').value=''; $('#qDeposit').value=''; $('#qTimeline').value=''; $('#qStatus').value=''; $('#qDocs').value='false';
-      const d = $('#dlgQuote'); d.showModal();
-      $('#quoteCancel').onclick = () => d.close();
-      $('#quoteSave').onclick = (e) => {
+      document.getElementById('qVendor').value='';
+      document.getElementById('qAmount').value='';
+      document.getElementById('qDeposit').value='';
+      document.getElementById('qTimeline').value='';
+      document.getElementById('qStatus').value='';
+      document.getElementById('qDocs').value='false';
+      const d = document.getElementById('dlgQuote'); d.showModal();
+      document.getElementById('quoteCancel').onclick = () => d.close();
+      document.getElementById('quoteSave').onclick = (e) => {
         e.preventDefault();
         const p = currentProject(); if(!p) return;
-        const vendor = $('#qVendor').value.trim();
-        const amountRaw = $('#qAmount').value.trim();
+        const vendor = document.getElementById('qVendor').value.trim();
+        const amountRaw = document.getElementById('qAmount').value.trim();
         if(!vendor){ alert('Vendor is required.'); return; }
         if(amountRaw==='' || isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
-        const q = { id:uid(), project_id:p.id, vendor, amount:Number(amountRaw), deposit:$('#q
+        const q = { id:uid(), project_id:p.id, vendor, amount:Number(amountRaw), deposit:document.getElementById('qDeposit').value.trim(), timeline:document.getElementById('qTimeline').value.trim(), status:document.getElementById('qStatus').value.trim(), documents_complete: (document.getElementById('qDocs').value==='true') };
+        state.quotes.push(q); save(); d.close(); renderQuotes(); setStatus('Quote added.');
+      };
+    };
+
+    // ===== Export/Save/Clear =====
+    document.getElementById('btnExportCsv').onclick = exportCSV;
+    document.getElementById('btnSaveJson').onclick = () => {
+      const a=document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
+      a.download = 'a2a_data.json';
+      a.click();
+    };
+    document.getElementById('btnClear').onclick = () => {
+      if(confirm('This clears ALL projects and quotes saved in this browser. Continue?')){
+        localStorage.removeItem(KEY);
+        state = load();
+        refreshProjects();
+        renderQuotes();
+        setStatus('All local data cleared.');
+      }
+    };
+
+    // ===== Init =====
+    (function boot(){ refreshProjects(); renderQuotes(); })();
+  </script>
+</body>
+</html>
