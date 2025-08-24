@@ -3,43 +3,43 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apples to Apples – Standalone (Local/CSV/JSON)</title>
+  <title>Apples to Apples</title>
   <style>
-    :root { --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --accent:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; }
+    :root { --bg:#1e293b; --panel:#f1f5f9; --muted:#475569; --text:#0f172a; --accent:#60a5fa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444; }
     body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); }
-    .nav{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:#111827;color:white}
+    .nav{display:flex;justify-content:space-between;align-items:center;padding:1rem;background:var(--panel);color:var(--text);font-weight:600}
     .btn{cursor:pointer;border:none;border-radius:12px;padding:8px 12px;font-weight:600;margin-left:6px}
-    .btn.secondary{background:#334155;color:var(--text)}
-    .btn.ghost{background:transparent;border:1px dashed #555;color:var(--text)}
+    .btn.secondary{background:#cbd5e1;color:var(--text)}
+    .btn.ghost{background:transparent;border:1px dashed #64748b;color:var(--text)}
     .btn.warn{background:var(--amber);color:#111827}
     .btn.danger{background:var(--red);color:white}
-    .card{background:#111827;border:1px solid #333;border-radius:14px;padding:1rem;margin-top:1rem}
+    .card{background:var(--panel);border:1px solid #cbd5e1;border-radius:14px;padding:1rem;margin-top:1rem}
     table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid #333}
-    th{background:#0b1220;text-align:left}
-    tr:hover{background:#1e293b}
+    th,td{padding:8px;border-bottom:1px solid #cbd5e1}
+    th{background:#e2e8f0;text-align:left}
+    tr:hover{background:#f1f5f9}
     .badge.lowest{background:var(--green);color:#111827;padding:2px 6px;border-radius:999px;font-size:12px}
     .hint{color:var(--muted);font-size:14px}
-    select,input,textarea{background:#0b1220;color:var(--text);border:1px solid #444;border-radius:8px;padding:6px}
-    .drop{border:2px dashed #555;border-radius:10px;padding:1rem;text-align:center;margin-top:1rem}
-    .drop.drag{border-color:#93c5fd;background:rgba(147,197,253,.1)}
+    select,input,textarea{background:#e2e8f0;color:var(--text);border:1px solid #94a3b8;border-radius:8px;padding:6px}
+    .drop{border:2px dashed #94a3b8;border-radius:10px;padding:1rem;text-align:center;margin-top:1rem}
+    .drop.drag{border-color:#93c5fd;background:rgba(147,197,253,.2)}
   </style>
 </head>
 <body>
   <div class="nav">
-    <div>🍏 Apples to Apples – Standalone</div>
+    <div>🍏 Apples to Apples</div>
     <div>
       <button id="btnImport" class="btn">Open File</button>
-      <button id="btnAddProject" class="btn secondary">New Project</button>
+      <button id="btnAddProject" class="btn secondary">Add Project</button>
       <button id="btnAddQuote" class="btn secondary">Add Quote</button>
-      <button id="btnExportCsv" class="btn ghost">Export CSV</button>
-      <button id="btnSaveJson" class="btn ghost">Save JSON</button>
+      <button id="btnExportCsv" class="btn ghost">Export</button>
+      <button id="btnSaveJson" class="btn ghost">Save</button>
       <button id="btnClear" class="btn danger">Clear</button>
     </div>
   </div>
 
   <div class="card">
-    <div class="hint">Drag & drop CSV or JSON here, or use the Open File button.</div>
+    <div class="hint">Drag & drop a file here, or use the Open File button.</div>
     <div id="drop" class="drop">Drop file here</div>
     <div style="margin-top:1rem">
       <label class="hint">Project:</label>
@@ -61,10 +61,10 @@
 
   <input id="fileInput" type="file" accept=".csv,.json" style="display:none"/>
 
-  <!-- New Project Dialog (Cancel always closes) -->
+  <!-- Add Project Dialog -->
   <dialog id="dlgProject">
     <form method="dialog" style="padding:1rem;display:grid;gap:10px">
-      <h3>New Project</h3>
+      <h3>Add Project</h3>
       <input id="projName" placeholder="Project name">
       <input id="projDesc" placeholder="Description">
       <menu style="display:flex;gap:8px;justify-content:flex-end">
@@ -74,7 +74,7 @@
     </form>
   </dialog>
 
-  <!-- Add/Edit Quote Dialog (Cancel always closes) -->
+  <!-- Add/Edit Quote Dialog -->
   <dialog id="dlgQuote">
     <form method="dialog" style="padding:1rem;display:grid;gap:10px">
       <h3>Add Quote</h3>
@@ -93,41 +93,55 @@
 
   <script>
     // ===== State =====
-    const KEY='a2a_data_v1'; let state=load();
-    function load(){ try{return JSON.parse(localStorage.getItem(KEY))||{projects:[],quotes:[]};}catch{return{projects:[],quotes:[]};} }
+    const KEY='a2a_data_v1';
+    let state = load();
+
+    function load(){
+      try { return JSON.parse(localStorage.getItem(KEY)) || {projects:[], quotes:[]}; }
+      catch { return {projects:[], quotes:[]}; }
+    }
     function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
     function uid(){ return Math.random().toString(36).slice(2,9); }
 
-    const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-    function setStatus(m){ $('#status').textContent=m; }
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    function setStatus(m){ $('#status').textContent = m; }
     function money(v){ if(v==null||v==='') return '—'; const n=+v; return isNaN(n)? v : n.toLocaleString(undefined,{style:'currency',currency:'USD'}); }
-    function currentProject(){ return state.projects.find(p=>p.id===$('#projectSelect').value); }
+    function currentProject(){ return state.projects.find(p => p.id === $('#projectSelect').value); }
 
-    // ===== Projects UI =====
+    // ===== Projects / Quotes UI =====
     function refreshProjects(selId){
-      const s=$('#projectSelect'); s.innerHTML='';
-      state.projects.forEach(p=>{const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; s.appendChild(o);});
-      if(state.projects.length) s.value=selId||state.projects[0].id;
+      const s = $('#projectSelect');
+      s.innerHTML='';
+      state.projects.forEach(p=>{
+        const o=document.createElement('option');
+        o.value=p.id; o.textContent=p.name; s.appendChild(o);
+      });
+      if(state.projects.length) s.value = selId || state.projects[0].id;
     }
     function projectQuotes(pid){
-      return state.quotes.filter(q=>q.project_id===pid).sort((a,b)=>(a.amount??Infinity)-(b.amount??Infinity));
+      return state.quotes
+        .filter(q=> q.project_id === pid)
+        .sort((a,b)=> (a.amount??Infinity) - (b.amount??Infinity));
     }
 
     function renderQuotes(){
-      const p=currentProject(); const tb=$('#quotesBody'); tb.innerHTML='';
-      if(!p){ tb.innerHTML='<tr><td colspan=8 class="hint">No project selected</td></tr>'; return; }
-      const rows=projectQuotes(p.id);
-      if(!rows.length){ tb.innerHTML='<tr><td colspan=8 class="hint">No quotes</td></tr>'; return; }
+      const p = currentProject();
+      const tb = $('#quotesBody');
+      tb.innerHTML='';
+      if(!p){ tb.innerHTML = '<tr><td colspan=8 class="hint">No project selected</td></tr>'; return; }
+      const rows = projectQuotes(p.id);
+      if(!rows.length){ tb.innerHTML = '<tr><td colspan=8 class="hint">No quotes</td></tr>'; return; }
       rows.forEach((q,i)=>{
         const tr=document.createElement('tr');
-        tr.innerHTML=`
+        tr.innerHTML = `
           <td>${q.vendor||'—'}</td>
           <td>${money(q.amount)}</td>
           <td>${q.deposit||'—'}</td>
           <td>${q.timeline||'—'}</td>
           <td>${q.status||'—'}</td>
           <td>${q.documents_complete?'✅':'❌'}</td>
-          <td>${i===0?'<span class="badge lowest">Lowest</span>':''}${(currentProject().awarded_quote_id===q.id)?' <span class="badge" style="background:#93c5fd;color:#111827">Awarded</span>':''}</td>
+          <td>${i===0?'<span class="badge lowest">Lowest</span>':''}${(p.awarded_quote_id===q.id)?' <span class="badge" style="background:#93c5fd;color:#111827">Awarded</span>':''}</td>
           <td>
             <button class="btn warn" data-award="${q.id}">Award</button>
             <button class="btn secondary" data-edit="${q.id}">Edit</button>
@@ -135,70 +149,82 @@
           </td>`;
         tb.appendChild(tr);
       });
-      $$('[data-award]').forEach(b=> b.onclick=()=>{ const p=currentProject(); p.awarded_quote_id=b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); });
-      $$('[data-del]').forEach(b=> b.onclick=()=>{ state.quotes = state.quotes.filter(x=> x.id !== b.dataset.del); save(); renderQuotes(); setStatus('Deleted.'); });
-      $$('[data-edit]').forEach(b=> b.onclick=()=> editQuote(b.dataset.edit));
+
+      $$('[data-award]').forEach(b=> b.onclick = () => { p.awarded_quote_id = b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); });
+      $$('[data-del]').forEach(b=> b.onclick = () => { state.quotes = state.quotes.filter(x=> x.id !== b.dataset.del); save(); renderQuotes(); setStatus('Deleted.'); });
+      $$('[data-edit]').forEach(b=> b.onclick = () => editQuote(b.dataset.edit));
     }
 
     function editQuote(id){
-      const q=state.quotes.find(x=>x.id===id); if(!q) return;
-      $('#qVendor').value=q.vendor||''; $('#qAmount').value=q.amount??''; $('#qDeposit').value=q.deposit||'';
-      $('#qTimeline').value=q.timeline||''; $('#qStatus').value=q.status||''; $('#qDocs').value=String(!!q.documents_complete);
-      const d=$('#dlgQuote'); d.showModal();
-      $('#quoteCancel').onclick=()=> d.close();
-      $('#quoteSave').onclick=(e)=>{
+      const q = state.quotes.find(x=>x.id===id); if(!q) return;
+      $('#qVendor').value = q.vendor||'';
+      $('#qAmount').value = q.amount??'';
+      $('#qDeposit').value = q.deposit||'';
+      $('#qTimeline').value = q.timeline||'';
+      $('#qStatus').value = q.status||'';
+      $('#qDocs').value = String(!!q.documents_complete);
+      const d = $('#dlgQuote');
+      d.showModal();
+      $('#quoteCancel').onclick = () => d.close();
+      $('#quoteSave').onclick = (e) => {
         e.preventDefault();
-        const vendor=$('#qVendor').value.trim();
-        const amountRaw=$('#qAmount').value.trim();
+        const vendor = $('#qVendor').value.trim();
+        const amountRaw = $('#qAmount').value.trim();
         if(!vendor){ alert('Vendor is required.'); return; }
-        if(amountRaw===''|| isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
-        q.vendor=vendor; q.amount=Number(amountRaw);
-        q.deposit=$('#qDeposit').value.trim(); q.timeline=$('#qTimeline').value.trim();
-        q.status=$('#qStatus').value.trim(); q.documents_complete=($('#qDocs').value==='true');
+        if(amountRaw==='' || isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
+        q.vendor = vendor;
+        q.amount = Number(amountRaw);
+        q.deposit = $('#qDeposit').value.trim();
+        q.timeline = $('#qTimeline').value.trim();
+        q.status = $('#qStatus').value.trim();
+        q.documents_complete = ($('#qDocs').value === 'true');
         save(); d.close(); renderQuotes(); setStatus('Quote updated.');
       };
     }
 
-    // ===== Import/Export =====
+    // ===== Import / Export =====
     function csvEscape(v){
-      const s=String(v ?? '');
+      const s = String(v ?? '');
       return (s.includes('"')||s.includes(',')||s.includes('\n')) ? '"'+s.replace(/"/g,'""')+'"' : s;
     }
     function exportCSV(){
-      const p=currentProject(); if(!p){ alert('Select a project first.'); return; }
-      const list=projectQuotes(p.id); if(!list.length){ alert('No quotes to export for this project.'); return; }
-      const rows=[['Vendor','Quote','Deposit','Timeline','Status','Docs']];
+      const p = currentProject(); if(!p){ alert('Select a project first.'); return; }
+      const list = projectQuotes(p.id); if(!list.length){ alert('No quotes to export for this project.'); return; }
+      const rows = [[ 'Vendor','Quote','Deposit','Timeline','Status','Docs' ]];
       list.forEach(q=>{
-        const amount=(q.amount!==undefined && q.amount!==null && q.amount!=='') ? q.amount : '';
+        const amount = (q.amount!==undefined && q.amount!==null && q.amount!=='') ? q.amount : '';
         rows.push([ q.vendor||'', amount, q.deposit||'', q.timeline||'', q.status||'', q.documents_complete?'TRUE':'FALSE' ]);
       });
-      const csv=rows.map(r=> r.map(csvEscape).join(',')).join('\r\n');
-      const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-      a.download=(p.name.replace(/\s+/g,'_'))+'_quotes.csv'; a.click();
+      const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+      a.download = (p.name.replace(/\s+/g,'_')) + '_quotes.csv';
+      a.click();
     }
 
     function parseCSV(txt){
-      const l=txt.trim().split(/\r?\n/); if(!l.length) return [];
-      const h=l[0].split(',').map(x=>x.trim().toLowerCase()); const idx=k=>h.indexOf(k);
-      const arr=[];
+      const l = txt.trim().split(/\r?\n/); if(!l.length) return [];
+      const h = l[0].split(',').map(x=>x.trim().toLowerCase());
+      const idx = k => h.indexOf(k);
+      const arr = [];
       for(let i=1;i<l.length;i++){
-        const c=l[i].split(',');
+        const c = l[i].split(',');
         arr.push({
-          project:c[idx('project')]||'General',
-          vendor:c[idx('vendor')]||'',
-          amount:+(c[idx('quote')]||c[idx('amount')]||0),
-          deposit:c[idx('deposit')]||'',
+          project: c[idx('project')]||'General',
+          vendor:  c[idx('vendor')]||'',
+          amount:  +(c[idx('quote')]||c[idx('amount')]||0),
+          deposit: c[idx('deposit')]||'',
           timeline:c[idx('timeline')]||'',
-          status:c[idx('status')]||'',
-          documents_complete:(c[idx('documents_complete')]||'').toLowerCase()==='true'
+          status:  c[idx('status')]||'',
+          documents_complete: (c[idx('documents_complete')]||'').toLowerCase()==='true'
         });
       }
       return arr;
     }
     function importCSV(rows){
       rows.forEach(r=>{
-        let p=state.projects.find(x=>x.name===r.project);
-        if(!p){ p={id:uid(),name:r.project,description:'Imported from CSV',awarded_quote_id:null}; state.projects.push(p); }
+        let p = state.projects.find(x=>x.name===r.project);
+        if(!p){ p = {id:uid(), name:r.project, description:'Imported from CSV', awarded_quote_id:null}; state.projects.push(p); }
         state.quotes.push({ id:uid(), project_id:p.id, vendor:r.vendor, amount:r.amount, deposit:r.deposit, timeline:r.timeline, status:r.status, documents_complete: !!r.documents_complete });
       });
       save(); refreshProjects(); renderQuotes(); setStatus('CSV imported.');
@@ -206,70 +232,58 @@
     function importJSON(obj){
       if(obj.projects && obj.quotes){ state=obj; save(); refreshProjects(); renderQuotes(); setStatus('JSON loaded.'); return; }
       if(Array.isArray(obj)){
-        const name=prompt('Project name for imported quotes?')||'Imported';
-        const p={id:uid(),name,description:'Imported JSON',awarded_quote_id:null}; state.projects.push(p);
+        const name = prompt('Project name for imported quotes?') || 'Imported';
+        const p = {id:uid(), name, description:'Imported JSON', awarded_quote_id:null};
+        state.projects.push(p);
         obj.forEach(r=> state.quotes.push({ id:uid(), project_id:p.id, vendor:r.vendor||'', amount:+(r.amount||0), deposit:r.deposit||'', timeline:r.timeline||'', status:r.status||'', documents_complete: !!r.documents_complete }));
         save(); refreshProjects(p.id); renderQuotes(); setStatus('JSON quotes imported.');
       }
     }
 
-    // ===== Events =====
-    $('#btnImport').onclick=()=> $('#fileInput').click();
-    $('#fileInput').onchange=(e)=> handleFiles(e.target.files);
+    // ===== File + Drag & Drop =====
+    $('#btnImport').onclick = () => $('#fileInput').click();
+    $('#fileInput').onchange = (e) => handleFiles(e.target.files);
     function handleFiles(files){
-      if(!files||!files.length) return; const f=files[0]; const reader=new FileReader();
-      reader.onload=()=>{
-        try{
-          if(f.name.toLowerCase().endsWith('.json')) importJSON(JSON.parse(reader.result));
+      if(!files || !files.length) return;
+      const f = files[0]; const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          if (f.name.toLowerCase().endsWith('.json')) importJSON(JSON.parse(reader.result));
           else importCSV(parseCSV(reader.result));
-        }catch(err){ alert('Import failed: '+err.message); }
+        } catch(err){ alert('Import failed: '+ err.message); }
       };
       reader.readAsText(f);
     }
 
-    const drop=$('#drop');
+    const drop = $('#drop');
     ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('drag'); }));
     ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
     drop.addEventListener('drop', e=> handleFiles(e.dataTransfer.files));
 
-    // Project dialog
-    $('#btnAddProject').onclick=()=>{
+    // ===== Project Dialog =====
+    $('#btnAddProject').onclick = () => {
       $('#projName').value=''; $('#projDesc').value='';
-      const d=$('#dlgProject'); d.showModal();
-      $('#projCancel').onclick=()=> d.close();
-      $('#projSave').onclick=()=>{
-        const name=$('#projName').value.trim();
+      const d = $('#dlgProject'); d.showModal();
+      $('#projCancel').onclick = () => d.close();
+      $('#projSave').onclick = () => {
+        const name = $('#projName').value.trim();
         if(!name){ alert('Project name is required.'); return; }
-        const p={ id:uid(), name, description:$('#projDesc').value.trim(), awarded_quote_id:null };
+        const p = { id:uid(), name, description:$('#projDesc').value.trim(), awarded_quote_id:null };
         state.projects.unshift(p); save(); d.close(); refreshProjects(p.id); renderQuotes(); setStatus('Project created.');
       };
     };
 
-    // Quote dialog
-    $('#btnAddQuote').onclick=()=>{
+    // ===== Quote Dialog =====
+    $('#btnAddQuote').onclick = () => {
       if(!currentProject()){ alert('Create or select a project first.'); return; }
       $('#qVendor').value=''; $('#qAmount').value=''; $('#qDeposit').value=''; $('#qTimeline').value=''; $('#qStatus').value=''; $('#qDocs').value='false';
-      const d=$('#dlgQuote'); d.showModal();
-      $('#quoteCancel').onclick=()=> d.close();
-      $('#quoteSave').onclick=(e)=>{
+      const d = $('#dlgQuote'); d.showModal();
+      $('#quoteCancel').onclick = () => d.close();
+      $('#quoteSave').onclick = (e) => {
         e.preventDefault();
-        const p=currentProject(); if(!p) return;
-        const vendor=$('#qVendor').value.trim();
-        const amountRaw=$('#qAmount').value.trim();
+        const p = currentProject(); if(!p) return;
+        const vendor = $('#qVendor').value.trim();
+        const amountRaw = $('#qAmount').value.trim();
         if(!vendor){ alert('Vendor is required.'); return; }
         if(amountRaw==='' || isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
-        const q={ id:uid(), project_id:p.id, vendor, amount:Number(amountRaw), deposit:$('#qDeposit').value.trim(), timeline:$('#qTimeline').value.trim(), status:$('#qStatus').value.trim(), documents_complete:($('#qDocs').value==='true') };
-        state.quotes.push(q); save(); d.close(); renderQuotes(); setStatus('Quote added.');
-      };
-    };
-
-    // Exports & clear
-    $('#btnExportCsv').onclick=exportCSV;
-    $('#btnSaveJson').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})); a.download='a2a_data.json'; a.click(); };
-    $('#btnClear').onclick=()=>{ if(confirm('Clear all local data?')){ localStorage.removeItem(KEY); state=load(); refreshProjects(); renderQuotes(); setStatus('Local data cleared.'); } };
-
-    // Init
-    (function boot(){ refreshProjects(); renderQuotes(); })();
-  </script>
-</body>
-</html>
+        const q = { id:uid(), project_id:p.id, vendor, amount:Number(amountRaw), deposit:$('#q
