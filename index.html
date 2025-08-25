@@ -12,7 +12,7 @@
       --red:#ef4444; --amber:#f59e0b; --blue:#60a5fa; --greenBadge:#22c55e;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,sans-serif;background:#e5eef7;color:var(--text)}
+    body{margin:0;font-family:system-ui,sans-serif;background:#e5eef7;color:var(--text);display:flex;flex-direction:column;min-height:100vh}
     .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--green)}
     .brand{display:flex;flex-direction:column;line-height:1.1}
     .brand .title{font-weight:800;font-size:20px;color:var(--red)}
@@ -34,6 +34,7 @@
     .drop{border:2px dashed #94a3b8;border-radius:10px;padding:1rem;text-align:center;margin-top:1rem}
     .drop.drag{border-color:#93c5fd;background:rgba(147,197,253,.18)}
     dialog{border:none;border-radius:14px}
+    footer{margin-top:auto;text-align:center;padding:10px;font-size:12px;color:#475569;background:#f1f5f9;border-top:1px solid #cbd5e1}
   </style>
 </head>
 <body>
@@ -111,6 +112,10 @@
     </form>
   </dialog>
 
+  <footer>
+    Build v1.0 – Last updated: Aug 25, 2025
+  </footer>
+
   <script>
   "use strict";
   window.addEventListener("DOMContentLoaded", () => {
@@ -185,9 +190,10 @@
     // Add Quote
     $('#btnAddQuote').onclick=()=>{if(!currentProject()){alert('Create or select a project first.');return;}$('#qVendor').value='';$('#qAmount').value='';$('#qDeposit').value='';$('#qTimeline').value='';$('#qStatus').value='';$('#qDocs').value='false';const d=$('#dlgQuote');d.showModal();$('#quoteCancel').onclick=()=>d.close();$('#quoteSave').onclick=(e)=>{e.preventDefault();const p=currentProject();if(!p) return;const vendor=$('#qVendor').value.trim();const amountRaw=$('#qAmount').value.trim();if(!vendor){alert('Vendor is required.');return;}if(amountRaw===''||isNaN(Number(amountRaw))){alert('Quote amount is required and must be a number.');return;}const q={id:uid(),project_id:p.id,vendor,amount:Number(amountRaw),deposit:$('#qDeposit').value.trim(),timeline:$('#qTimeline').value.trim(),status:$('#qStatus').value.trim(),documents_complete:($('#qDocs').value==='true')};state.quotes.push(q);save();d.close();renderQuotes();setStatus('Quote added.');}};
 
-    // Export / Save / Clear
+    // Export / Save
     $('#btnExportCsv').onclick=exportCSV;
     $('#btnSaveJson').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='a2a_data.json';a.click();};
 
-    // Clear All with strong warning
-    $('#btnClear').onclick=()=>{const code=prompt("⚠️ CAUTION ⚠️\n\nThis will clear ALL projects and quotes from the table.\n\nIf you really want to do this, type the safety code: NFPA99");if(code===null)return;if(code.trim().toUpperCase()==="NFPA99"){localStorage.removeItem(KEY);state=load();refreshProjects();renderQuotes();set
+    // ===== Clear All with strong warning =====
+    $('#btnClear').onclick = () => {
+      const code
