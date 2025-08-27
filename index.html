@@ -19,7 +19,16 @@
     body{margin:0;font-family:system-ui,sans-serif;background:#e5eef7;color:var(--text);display:flex;flex-direction:column;min-height:100vh}
     .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--green)}
     .brand{display:flex;flex-direction:column;line-height:1.1}
-    .brand .title{font-weight:800;font-size:20px;color:var(--red)}
+    .brand .title{
+  font-weight:800;
+  font-size:20px;
+  color:var(--red);
+  text-shadow:
+    -1px -1px 0 #000,
+     1px -1px 0 #000,
+    -1px  1px 0 #000,
+     1px  1px 0 #000; /* black outline */
+}
     .brand .tag{font-size:13px;color:#334155}
     .actions .btn{cursor:pointer;border:none;border-radius:12px;padding:8px 12px;font-weight:600;margin-left:6px}
     .btn.secondary{background:#cbd5e1;color:var(--text)}
