@@ -11,7 +11,7 @@
 
   <style>
     :root{
-      --green:#65a30d; /* slightly darker apple-green header */
+      --green:#65a30d; /* medium apple-green header */
       --panel:#f1f5f9; --muted:#475569; --text:#0f172a;
       --red:#ef4444; --amber:#f59e0b; --blue:#60a5fa; --greenBadge:#22c55e;
     }
@@ -20,15 +20,15 @@
     .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--green)}
     .brand{display:flex;flex-direction:column;line-height:1.1}
     .brand .title{
-  font-weight:800;
-  font-size:20px;
-  color:var(--red);
-  text-shadow:
-    -1px -1px 0 #000,
-     1px -1px 0 #000,
-    -1px  1px 0 #000,
-     1px  1px 0 #000; /* black outline */
-}
+      font-weight:800;
+      font-size:20px;
+      color:var(--red);
+      text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000; /* black outline */
+    }
     .brand .tag{font-size:13px;color:#334155}
     .actions .btn{cursor:pointer;border:none;border-radius:12px;padding:8px 12px;font-weight:600;margin-left:6px}
     .btn.secondary{background:#cbd5e1;color:var(--text)}
@@ -37,17 +37,21 @@
     .btn.danger{background:var(--red);color:white}
     .card{background:var(--panel);border:1px solid #cbd5e1;border-radius:14px;padding:1rem;margin:16px}
     table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid #cbd5e1}
+    th,td{padding:8px;border-bottom:1px solid #cbd5e1;vertical-align:top}
     th{background:#e2e8f0;text-align:left}
     tr:hover{background:#f8fafc}
     .badge.lowest{background:var(--greenBadge);color:#111827;padding:2px 6px;border-radius:999px;font-size:12px}
     .hint{color:var(--muted);font-size:14px}
     select,input,textarea{background:#e2e8f0;color:var(--text);border:1px solid #94a3b8;border-radius:8px;padding:6px}
     #projectSelect{min-width:260px}
-    .drop{border:2px dashed #94a3b8;border-radius:10px;padding:1rem;text-align:center;margin-top:1rem}
+    .drop{border:2px dashed #94a3b8;border-radius:10px;padding:1rem;text-align:center;margin-top:1rem;background:#fff}
     .drop.drag{border-color:#93c5fd;background:rgba(147,197,253,.18)}
     dialog{border:none;border-radius:14px}
     footer{margin-top:auto;text-align:center;padding:10px;font-size:12px;color:#475569;background:#f1f5f9;border-top:1px solid #cbd5e1}
+    /* Project Docs list */
+    .docs-list{list-style:none;padding:0;margin:6px 0 0 0}
+    .docs-list li{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;background:#ffffff}
+    .docs-list a{word-break:break-all}
   </style>
 </head>
 <body>
@@ -67,13 +71,21 @@
   </div>
 
   <div class="card">
-    <div class="hint">Drag & drop a file here, or use the Open File button.</div>
+    <div class="hint">
+      Drag & drop <b>CSV/JSON</b> to import quotes, or <b>ANY file</b> (PDF/Word/Excel/images) to attach to the selected project — or use the Open File button.
+    </div>
     <div id="drop" class="drop">Drop file here</div>
 
     <div style="margin-top:1rem">
       <label class="hint">Project:</label>
       <select id="projectSelect"></select>
       <div id="projectHelp" class="hint"></div>
+    </div>
+
+    <!-- Project Documents block -->
+    <div class="card" id="docsBlock" style="display:none; margin-top:10px">
+      <div class="hint"><b>Project Documents</b> (attachments)</div>
+      <ul id="docsList" class="docs-list"></ul>
     </div>
 
     <table>
@@ -91,6 +103,7 @@
     <div id="status" class="hint">Ready.</div>
   </div>
 
+  <!-- Accept ANY file (attachments + CSV/JSON) -->
   <input id="fileInput" type="file" accept="*/*" style="display:none"/>
 
   <!-- Add Project -->
@@ -128,21 +141,26 @@
 
   <footer id="buildInfo"></footer>
 
-<script>
-  const buildDate = new Date().toLocaleDateString(undefined, {
-    year: 'numeric', month: 'short', day: 'numeric'
-  });
-  document.getElementById('buildInfo').textContent =
-    `Build (auto) – Last updated: ${buildDate}`;
-</script>
-
   <script>
   "use strict";
   window.addEventListener("DOMContentLoaded", () => {
-    // ===== State =====
-    const KEY='a2a_data_v1';
+    // ===== Auto-update footer date =====
+    const buildDate = new Date().toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'});
+    document.getElementById('buildInfo').textContent = `Build (auto) – Last updated: ${buildDate}`;
+
+    // ===== State (v2 adds project_docs) =====
+    const KEY='a2a_data_v2';
     let state = load();
-    function load(){ try { return JSON.parse(localStorage.getItem(KEY)) || {projects:[], quotes:[]}; } catch { return {projects:[], quotes:[]}; } }
+    function load(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        const s = raw ? JSON.parse(raw) : {projects:[], quotes:[], project_docs:{}};
+        if(!s.project_docs) s.project_docs = {};
+        return s;
+      }catch{
+        return {projects:[], quotes:[], project_docs:{}};
+      }
+    }
     function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
     function uid(){ return Math.random().toString(36).slice(2,9); }
 
@@ -151,6 +169,61 @@
     function setStatus(m){ const el=$('#status'); if(el) el.textContent=m; }
     function money(v){ if(v==null||v==='') return '—'; const n=+v; return isNaN(n)? v : n.toLocaleString(undefined,{style:'currency',currency:'USD'}); }
     function currentProject(){ return state.projects.find(p => p.id === $('#projectSelect').value); }
+
+    // ===== Project Docs helpers =====
+    function ensureProjectDocs(pid){ if(!state.project_docs[pid]) state.project_docs[pid] = []; }
+    function renderProjectDocs(){
+      const p=currentProject();
+      const block = $('#docsBlock');
+      const list  = $('#docsList');
+      if(!block || !list) return;
+      if(!p){ block.style.display='none'; return; }
+      ensureProjectDocs(p.id);
+      const docs = state.project_docs[p.id];
+      block.style.display='block';
+      list.innerHTML='';
+      if(!docs.length){
+        const li=document.createElement('li');
+        li.innerHTML='<span class="hint">No attachments yet. Drag any file here or use Open File.</span>';
+        list.appendChild(li);
+        return;
+      }
+      docs.forEach(doc=>{
+        const li=document.createElement('li');
+        const a=document.createElement('a');
+        a.href = doc.dataURL || '#';
+        a.target = '_blank';
+        a.textContent = doc.name + (doc.size ? ` (${(doc.size/1024).toFixed(1)} KB)` : '');
+        const del=document.createElement('button');
+        del.className='btn danger';
+        del.textContent='Delete';
+        del.onclick=()=>{ deleteProjectDoc(p.id, doc.id); };
+        li.appendChild(a);
+        li.appendChild(del);
+        list.appendChild(li);
+      });
+    }
+    function addProjectDoc(file){
+      const p=currentProject();
+      if(!p){ alert('Create or select a project first to attach files.'); return; }
+      ensureProjectDocs(p.id);
+      // Persist small files as DataURL (localStorage limit ~5MB total; keep each file small)
+      const MAX = 2 * 1024 * 1024; // 2 MB per file for now
+      if(file.size > MAX){ alert('File is larger than 2 MB. Please attach a smaller file for now.'); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const doc = { id:uid(), name:file.name, type:file.type, size:file.size, dataURL:String(reader.result), ts:Date.now() };
+        state.project_docs[p.id].push(doc);
+        save();
+        renderProjectDocs();
+        setStatus(`Attached: ${file.name}`);
+      };
+      reader.readAsDataURL(file);
+    }
+    function deleteProjectDoc(pid, docId){
+      state.project_docs[pid] = (state.project_docs[pid]||[]).filter(d=>d.id!==docId);
+      save(); renderProjectDocs(); setStatus('Attachment deleted.');
+    }
 
     // ===== Projects / Quotes =====
     function refreshProjects(selId){
@@ -161,11 +234,14 @@
         opt.disabled=true; opt.selected=true;
         s.appendChild(opt);
         $('#projectHelp').textContent='Click “Add Project” to create your first project.';
+        $('#docsBlock').style.display='none';
+        $('#quotesBody').innerHTML='<tr><td colspan="8" class="hint">No project selected</td></tr>';
         return;
       }
       state.projects.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; s.appendChild(o); });
       s.value = selId || state.projects[0].id;
       $('#projectHelp').textContent='';
+      renderProjectDocs();
     }
 
     function projectQuotes(pid){
@@ -176,29 +252,32 @@
 
     function renderQuotes(){
       const p=currentProject(); const tb=$('#quotesBody'); tb.innerHTML='';
-      if(!p){ tb.innerHTML='<tr><td colspan="8" class="hint">No project selected</td></tr>'; return; }
+      if(!p){ tb.innerHTML='<tr><td colspan="8" class="hint">No project selected</td></tr>'; $('#docsBlock').style.display='none'; return; }
       const rows=projectQuotes(p.id);
-      if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="hint">No quotes</td></tr>'; return; }
-      rows.forEach((q,i)=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML = `
-          <td>${q.vendor||'—'}</td>
-          <td>${money(q.amount)}</td>
-          <td>${q.deposit||'—'}</td>
-          <td>${q.timeline||'—'}</td>
-          <td>${q.status||'—'}</td>
-          <td>${q.documents_complete?'✅':'❌'}</td>
-          <td>${i===0?'<span class="badge lowest">Lowest</span>':''}${(p.awarded_quote_id===q.id)?' <span class="badge" style="background:#93c5fd;color:#111827">Awarded</span>':''}</td>
-          <td>
-            <button class="btn warn" data-award="${q.id}">Award</button>
-            <button class="btn secondary" data-edit="${q.id}">Edit</button>
-            <button class="btn danger" data-del="${q.id}">Del</button>
-          </td>`;
-        tb.appendChild(tr);
-      });
-      $$('[data-award]').forEach(b=> b.onclick=()=>{ p.awarded_quote_id=b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); });
+      if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="hint">No quotes</td></tr>'; }
+      else {
+        rows.forEach((q,i)=>{
+          const tr=document.createElement('tr');
+          tr.innerHTML = `
+            <td>${q.vendor||'—'}</td>
+            <td>${money(q.amount)}</td>
+            <td>${q.deposit||'—'}</td>
+            <td>${q.timeline||'—'}</td>
+            <td>${q.status||'—'}</td>
+            <td>${q.documents_complete?'✅':'❌'}</td>
+            <td>${i===0?'<span class="badge lowest">Lowest</span>':''}${(p.awarded_quote_id===q.id)?' <span class="badge" style="background:#93c5fd;color:#111827">Awarded</span>':''}</td>
+            <td>
+              <button class="btn warn" data-award="${q.id}">Award</button>
+              <button class="btn secondary" data-edit="${q.id}">Edit</button>
+              <button class="btn danger" data-del="${q.id}">Del</button>
+            </td>`;
+          tb.appendChild(tr);
+        });
+      }
+      $$('[data-award]').forEach(b=> b.onclick=()=>{ const p=currentProject(); p.awarded_quote_id=b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); });
       $$('[data-del]').forEach(b=> b.onclick=()=>{ state.quotes=state.quotes.filter(x=>x.id!==b.dataset.del); save(); renderQuotes(); setStatus('Deleted.'); });
       $$('[data-edit]').forEach(b=> b.onclick=()=> editQuote(b.dataset.edit));
+      renderProjectDocs();
     }
 
     function editQuote(id){
@@ -272,7 +351,8 @@
 
     function importJSON(obj){
       if(obj.projects && obj.quotes){
-        state=obj; save(); refreshProjects(); renderQuotes(); setStatus('JSON loaded.'); return;
+        state=obj; if(!state.project_docs) state.project_docs={};
+        save(); refreshProjects(); renderQuotes(); setStatus('JSON loaded.'); return;
       }
       if(Array.isArray(obj)){
         const name = prompt('Project name for imported quotes?') || 'Imported';
@@ -293,17 +373,36 @@
     // ===== File + Drag&Drop =====
     $('#btnImport').onclick = () => $('#fileInput').click();
     $('#fileInput').onchange = (e) => handleFiles(e.target.files);
+
     function handleFiles(files){
       if(!files || !files.length) return;
-      const f=files[0]; const reader=new FileReader();
-      reader.onload = () => {
-        try {
-          if (f.name.toLowerCase().endsWith('.json')) importJSON(JSON.parse(reader.result));
-          else importCSV(parseCSV(reader.result));
-        } catch(err){ alert('Import failed: ' + err.message); }
-      };
-      reader.readAsText(f);
+      const f = files[0];
+      const name = f.name.toLowerCase();
+
+      // CSV/JSON → import
+      if (name.endsWith('.json')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try { importJSON(JSON.parse(reader.result)); }
+          catch(err){ alert('JSON import failed: ' + err.message); }
+        };
+        reader.readAsText(f);
+        return;
+      }
+      if (name.endsWith('.csv')) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try { importCSV(parseCSV(reader.result)); }
+          catch(err){ alert('CSV import failed: ' + err.message); }
+        };
+        reader.readAsText(f);
+        return;
+      }
+
+      // Anything else → attach to current project
+      addProjectDoc(f);
     }
+
     const drop = $('#drop');
     ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('drag'); }));
     ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
@@ -379,6 +478,7 @@
     // ===== Init =====
     refreshProjects();
     renderQuotes();
+    renderProjectDocs();
   });
   </script>
 </body>
