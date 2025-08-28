@@ -126,9 +126,15 @@
     </form>
   </dialog>
 
-  <footer>
-    Build v1.0 – Last updated: Aug 25, 2025
-  </footer>
+  <footer id="buildInfo"></footer>
+
+<script>
+  const buildDate = new Date().toLocaleDateString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric'
+  });
+  document.getElementById('buildInfo').textContent =
+    `Build (auto) – Last updated: ${buildDate}`;
+</script>
 
   <script>
   "use strict";
