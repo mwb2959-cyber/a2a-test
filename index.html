@@ -144,11 +144,12 @@
   <script>
   "use strict";
   window.addEventListener("DOMContentLoaded", () => {
-    // ===== Auto-update footer date =====
-    const buildDate = new Date().toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'});
-    document.getElementById('buildInfo').textContent = `Build (auto) – Last updated: ${buildDate}`;
+    // ===== (1) Manual version label + (2) auto date+time in footer =====
+    const VERSION = "v1.3"; // <- update when you want to mark a milestone
+    const buildStamp = new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    document.getElementById('buildInfo').textContent = `Build ${VERSION} — Last updated: ${buildStamp}`;
 
-    // ===== State (v2 adds project_docs) =====
+    // ===== State (v2 adds project_docs for attachments) =====
     const KEY='a2a_data_v2';
     let state = load();
     function load(){
