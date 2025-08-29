@@ -3,484 +3,345 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Apples to Apples</title>
-
-  <!-- (Optional) Add icon.png to show a custom iPhone Home Screen icon -->
-  <!-- <link rel="apple-touch-icon" href="icon.png">
-  <link rel="icon" type="image/png" href="icon.png"> -->
-
+  <title>Apples-to-Apples</title>
+  <!-- Tailwind (CDN for quick GitHub Pages deploy) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS v2 -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root{
-      --green:#65a30d; /* medium apple-green header */
-      --panel:#f1f5f9; --muted:#475569; --text:#0f172a;
-      --red:#ef4444; --amber:#f59e0b; --blue:#60a5fa; --greenBadge:#22c55e;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,sans-serif;background:#e5eef7;color:var(--text);display:flex;flex-direction:column;min-height:100vh}
-    .nav{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--green)}
-    .brand{display:flex;flex-direction:column;line-height:1.1}
-    .brand .title{
-      font-weight:800;
-      font-size:20px;
-      color:var(--red);
-      text-shadow:
-        -1px -1px 0 #000,
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000; /* black outline */
-    }
-    .brand .tag{font-size:13px;color:#334155}
-    .actions .btn{cursor:pointer;border:none;border-radius:12px;padding:8px 12px;font-weight:600;margin-left:6px}
-    .btn.secondary{background:#cbd5e1;color:var(--text)}
-    .btn.ghost{background:transparent;border:1px dashed #64748b;color:var(--text)}
-    .btn.warn{background:var(--amber);color:#111827}
-    .btn.danger{background:var(--red);color:white}
-    .card{background:var(--panel);border:1px solid #cbd5e1;border-radius:14px;padding:1rem;margin:16px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid #cbd5e1;vertical-align:top}
-    th{background:#e2e8f0;text-align:left}
-    tr:hover{background:#f8fafc}
-    .badge.lowest{background:var(--greenBadge);color:#111827;padding:2px 6px;border-radius:999px;font-size:12px}
-    .hint{color:var(--muted);font-size:14px}
-    select,input,textarea{background:#e2e8f0;color:var(--text);border:1px solid #94a3b8;border-radius:8px;padding:6px}
-    #projectSelect{min-width:260px}
-    .drop{border:2px dashed #94a3b8;border-radius:10px;padding:1rem;text-align:center;margin-top:1rem;background:#fff}
-    .drop.drag{border-color:#93c5fd;background:rgba(147,197,253,.18)}
-    dialog{border:none;border-radius:14px}
-    footer{margin-top:auto;text-align:center;padding:10px;font-size:12px;color:#475569;background:#f1f5f9;border-top:1px solid #cbd5e1}
-    /* Project Docs list */
-    .docs-list{list-style:none;padding:0;margin:6px 0 0 0}
-    .docs-list li{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1px solid #e2e8f0;border-radius:10px;margin-top:6px;background:#ffffff}
-    .docs-list a{word-break:break-all}
+    /* Simple GridHUD feel */
+    .hud-card { @apply bg-white/90 backdrop-blur rounded-2xl shadow-lg border border-slate-200; }
+    .badge    { @apply text-xs font-semibold px-2 py-1 rounded-full; }
+    .badge-lowest { @apply bg-emerald-100 text-emerald-700 border border-emerald-200; }
+    .badge-docs-ok { @apply bg-blue-100 text-blue-700 border border-blue-200; }
+    .badge-missing { @apply bg-rose-100 text-rose-700 border border-rose-200; }
+    .btn { @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 border shadow-sm hover:shadow-md transition; }
+    .btn-primary { @apply bg-black text-white border-black; }
+    .btn-ghost { @apply bg-white text-slate-700 border-slate-200; }
+    .btn-danger { @apply bg-rose-600 text-white border-rose-600; }
+    .table { @apply w-full text-sm; }
+    .table th { @apply text-left font-semibold text-slate-600; }
+    .table tr { @apply border-b border-slate-100; }
   </style>
 </head>
-<body>
-  <div class="nav">
-    <div class="brand">
-      <div>🍏🍎🍊 <span class="title">Apples to Apples</span></div>
-      <div class="tag">Clarity in every quote.</div>
+<body class="min-h-screen bg-slate-50">
+  <!-- App Shell -->
+  <header class="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-xl bg-emerald-600 grid place-content-center text-white font-black">A²</div>
+        <h1 class="text-xl font-bold">Apples‑to‑Apples</h1>
+      </div>
+      <nav class="flex items-center gap-2">
+        <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV">
+          <span class="i" data-icon="download"></span> Export CSV
+        </button>
+        <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing with CSV attached (manual attach)">
+          <span class="i" data-icon="mail"></span> Email Purchasing
+        </button>
+      </nav>
     </div>
-    <div class="actions">
-      <button id="btnImport" class="btn">Open File</button>
-      <button id="btnAddProject" class="btn secondary">Add Project</button>
-      <button id="btnAddQuote" class="btn secondary">Add Quote</button>
-      <button id="btnExportCsv" class="btn ghost">Export</button>
-      <button id="btnSaveJson" class="btn ghost">Save</button>
-      <button id="btnClear" class="btn danger">Clear All</button>
-    </div>
-  </div>
+  </header>
 
-  <div class="card">
-    <div class="hint">
-      Drag & drop <b>CSV/JSON</b> to import quotes, or <b>ANY file</b> (PDF/Word/Excel/images) to attach to the selected project — or use the Open File button.
-    </div>
-    <div id="drop" class="drop">Drop file here</div>
+  <main class="max-w-7xl mx-auto p-4 grid md:grid-cols-12 gap-4">
+    <!-- Filters / Project Picker -->
+    <section class="md:col-span-12 hud-card p-4">
+      <div class="grid md:grid-cols-3 gap-3 items-end">
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">Project</span>
+          <select id="selectProject" class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-emerald-500">
+            <option value="">Select a project…</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">Search vendors</span>
+          <input id="inputSearch" type="search" placeholder="Type to filter…" class="mt-1 w-full rounded-xl border-slate-300 focus:ring-2 focus:ring-emerald-500" />
+        </label>
+        <div class="flex gap-2">
+          <button id="btnRefresh" class="btn btn-ghost w-full"><span class="i" data-icon="refresh-ccw"></span> Refresh</button>
+          <button id="btnNewQuote" class="btn btn-primary w-full"><span class="i" data-icon="plus"></span> New Quote</button>
+        </div>
+      </div>
+    </section>
 
-    <div style="margin-top:1rem">
-      <label class="hint">Project:</label>
-      <select id="projectSelect"></select>
-      <div id="projectHelp" class="hint"></div>
-    </div>
+    <!-- Grid / Table -->
+    <section class="md:col-span-12 hud-card p-0 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="table" id="grid">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-4 py-3">Vendor</th>
+              <th class="px-4 py-3">Quote</th>
+              <th class="px-4 py-3">Deposit</th>
+              <th class="px-4 py-3">Timeline</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Docs</th>
+              <th class="px-4 py-3">Badges</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="gridBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="hidden p-8 text-center text-slate-500">Select a project to view quotes.</div>
+    </section>
+  </main>
 
-    <!-- Project Documents block -->
-    <div class="card" id="docsBlock" style="display:none; margin-top:10px">
-      <div class="hint"><b>Project Documents</b> (attachments)</div>
-      <ul id="docsList" class="docs-list"></ul>
-    </div>
+  <!-- Modal (New Quote) -->
+  <dialog id="dlgQuote" class="w-full max-w-xl rounded-2xl p-0 border border-slate-200 shadow-xl">
+    <form method="dialog">
+      <header class="flex items-center justify-between px-4 py-3 border-b">
+        <h3 class="font-semibold">Add Quote</h3>
+        <button class="btn btn-ghost" value="cancel"><span class="i" data-icon="x"></span></button>
+      </header>
+      <div class="p-4 grid md:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">Vendor</span>
+          <input id="qVendor" class="mt-1 w-full rounded-xl border-slate-300" required />
+        </label>
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">Quote Total ($)</span>
+          <input id="qTotal" type="number" step="0.01" class="mt-1 w-full rounded-xl border-slate-300" required />
+        </label>
+        <label class="block">
+          <span class="block text-xs font-medium text-slate-600">Deposit ($)</span>
+          <input id="qDeposit" type="number" step="0.01" class="mt-1 w-full rounded-xl border-slate-300" />
+        </label>
+        <label class="block md:col-span-2">
+          <span class="block text-xs font-medium text-slate-600">Timeline</span>
+          <input id="qTimeline" placeholder="e.g., 2–3 weeks" class="mt-1 w-full rounded-xl border-slate-300" />
+        </label>
+        <label class="block md:col-span-2">
+          <span class="block text-xs font-medium text-slate-600">Status</span>
+          <select id="qStatus" class="mt-1 w-full rounded-xl border-slate-300">
+            <option value="pending">Pending</option>
+            <option value="review">Review</option>
+            <option value="approved">Approved</option>
+          </select>
+        </label>
+      </div>
+      <footer class="flex justify-end gap-2 px-4 py-3 border-t">
+        <button class="btn btn-ghost" value="cancel">Cancel</button>
+        <button id="btnSaveQuote" class="btn btn-primary" value="default" type="submit">Save</button>
+      </footer>
+    </form>
+  </dialog>
 
-    <table>
-      <thead>
+  <script type="module">
+    // =====================
+    //  CONFIG
+    // =====================
+    const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co"; // <-- replace
+    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY"; // <-- replace
+
+    // Table / view names (adjust to your exact casing if different)
+    const TABLES = {
+      PROJECT: "Project",
+      QUOTE: "Quote",
+      VIEW_RANKED: "apples_to_apples_ranked", // expects columns listed below
+    };
+
+    // Expected columns from VIEW_RANKED:
+    // quote_id, project_id, vendor_name, quote_total, deposit, timeline, status, docs_ok (bool), is_lowest (bool)
+
+    // =====================
+    //  SUPABASE CLIENT
+    // =====================
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // =====================
+    //  DOM REFS
+    // =====================
+    const selectProject = document.getElementById('selectProject');
+    const inputSearch   = document.getElementById('inputSearch');
+    const btnRefresh    = document.getElementById('btnRefresh');
+    const btnExportCsv  = document.getElementById('btnExportCsv');
+    const btnEmailPurchasing = document.getElementById('btnEmailPurchasing');
+    const btnNewQuote   = document.getElementById('btnNewQuote');
+
+    const gridBody      = document.getElementById('gridBody');
+    const emptyState    = document.getElementById('emptyState');
+
+    const dlgQuote      = document.getElementById('dlgQuote');
+    const qVendor       = document.getElementById('qVendor');
+    const qTotal        = document.getElementById('qTotal');
+    const qDeposit      = document.getElementById('qDeposit');
+    const qTimeline     = document.getElementById('qTimeline');
+    const qStatus       = document.getElementById('qStatus');
+    const btnSaveQuote  = document.getElementById('btnSaveQuote');
+
+    let currentProjectId = null;
+    let currentRows = [];
+
+    // =====================
+    //  INIT
+    // =====================
+    document.addEventListener('DOMContentLoaded', async () => {
+      hydrateIcons();
+      await loadProjects();
+    });
+
+    function hydrateIcons(){
+      document.querySelectorAll('.i').forEach(el => {
+        const name = el.getAttribute('data-icon');
+        try { lucide.createIcons({ icons: { [name]: lucide[name] } }); } catch {}
+        el.innerHTML = `<svg data-lucide="${name}" class="w-4 h-4"></svg>`;
+      });
+      try { lucide.createIcons(); } catch {}
+    }
+
+    async function loadProjects(){
+      const { data, error } = await supabase.from(TABLES.PROJECT).select('id,name').order('name');
+      if(error){ console.error(error); alert('Error loading projects'); return; }
+      for (const p of data){
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = p.name || `Project ${p.id}`;
+        selectProject.appendChild(opt);
+      }
+    }
+
+    selectProject.addEventListener('change', async () => {
+      currentProjectId = selectProject.value || null;
+      await refreshGrid();
+    });
+
+    inputSearch.addEventListener('input', () => renderGrid());
+    btnRefresh.addEventListener('click', () => refreshGrid());
+
+    btnNewQuote.addEventListener('click', () => {
+      if(!currentProjectId){ alert('Pick a project first.'); return; }
+      qVendor.value = ""; qTotal.value = ""; qDeposit.value = ""; qTimeline.value = ""; qStatus.value = "pending";
+      dlgQuote.showModal();
+    });
+
+    btnSaveQuote.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const payload = {
+        project_id: currentProjectId,
+        vendor_name: qVendor.value.trim(),
+        quote_total: Number(qTotal.value || 0),
+        deposit: qDeposit.value === '' ? null : Number(qDeposit.value),
+        timeline: qTimeline.value.trim() || null,
+        status: qStatus.value,
+      };
+      const { error } = await supabase.from(TABLES.QUOTE).insert(payload);
+      if(error){ console.error(error); alert('Error saving quote'); return; }
+      dlgQuote.close();
+      await refreshGrid();
+    });
+
+    btnExportCsv.addEventListener('click', () => exportCsv());
+    btnEmailPurchasing.addEventListener('click', () => composeEmail());
+
+    async function refreshGrid(){
+      gridBody.innerHTML = '';
+      if(!currentProjectId){ emptyState.classList.remove('hidden'); return; }
+      emptyState.classList.add('hidden');
+
+      // Pull ranked view for this project
+      const { data, error } = await supabase
+        .from(TABLES.VIEW_RANKED)
+        .select('*')
+        .eq('project_id', currentProjectId)
+        .order('quote_total', { ascending: true });
+
+      if(error){ console.error(error); alert('Error loading quotes'); return; }
+
+      // Compute lowest if view doesn't provide it
+      const lowest = data?.length ? Math.min(...data.map(r => Number(r.quote_total || Infinity))) : null;
+      currentRows = (data || []).map(r => ({
+        ...r,
+        is_lowest: typeof r.is_lowest === 'boolean' ? r.is_lowest : (Number(r.quote_total) === lowest)
+      }));
+      renderGrid();
+    }
+
+    function renderGrid(){
+      const q = (inputSearch.value || '').toLowerCase();
+      const rows = currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q));
+      gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
+      hydrateIcons();
+      // wire action buttons
+      rows.forEach(r => {
+        const btn = document.getElementById(`award-${r.quote_id}`);
+        if(btn){ btn.addEventListener('click', () => awardVendor(r)); }
+      });
+    }
+
+    function rowHtml(r){
+      const money = (v) => v==null? '—' : `$${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+      return `
         <tr>
-          <th>Vendor</th><th>Quote</th><th>Deposit</th><th>Timeline</th>
-          <th>Status</th><th>Docs</th><th>Badge</th><th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="quotesBody">
-        <tr><td colspan="8" class="hint">No project selected</td></tr>
-      </tbody>
-    </table>
+          <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
+          <td class="px-4 py-3">${money(r.quote_total)}</td>
+          <td class="px-4 py-3">${money(r.deposit)}</td>
+          <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
+          <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
+          <td class="px-4 py-3">
+            ${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
+          </td>
+          <td class="px-4 py-3">
+            ${r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : ''}
+          </td>
+          <td class="px-4 py-3 text-right">
+            <button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>
+          </td>
+        </tr>`;
+    }
 
-    <div id="status" class="hint">Ready.</div>
-  </div>
+    async function awardVendor(r){
+      if(!confirm(`Award to ${r.vendor_name}?`)) return;
+      // Update Project.awarded_quote_id
+      const { error } = await supabase
+        .from(TABLES.PROJECT)
+        .update({ awarded_quote_id: r.quote_id })
+        .eq('id', r.project_id);
+      if(error){ console.error(error); alert('Error awarding vendor'); return; }
+      alert('Awarded!');
+    }
 
-  <!-- Accept ANY file (attachments + CSV/JSON) -->
-  <input id="fileInput" type="file" accept="*/*" style="display:none"/>
-
-  <!-- Add Project -->
-  <dialog id="dlgProject">
-    <form method="dialog" style="padding:1rem;display:grid;gap:10px;min-width:320px">
-      <h3>Add Project</h3>
-      <input id="projName" placeholder="Project name">
-      <input id="projDesc" placeholder="Description">
-      <menu style="display:flex;gap:8px;justify-content:flex-end">
-        <button id="projCancel" type="button" class="btn secondary">Cancel</button>
-        <button id="projSave" type="button" class="btn">Save</button>
-      </menu>
-    </form>
-  </dialog>
-
-  <!-- Add/Edit Quote -->
-  <dialog id="dlgQuote">
-    <form method="dialog" style="padding:1rem;display:grid;gap:10px;min-width:320px">
-      <h3>Add Quote</h3>
-      <input id="qVendor" placeholder="Vendor">
-      <input id="qAmount" type="number" step="0.01" placeholder="Quote ($)">
-      <input id="qDeposit" placeholder="Deposit">
-      <input id="qTimeline" placeholder="Timeline">
-      <input id="qStatus" placeholder="Status">
-      <select id="qDocs">
-        <option value="true">Docs Complete</option>
-        <option value="false" selected>Docs Incomplete</option>
-      </select>
-      <menu style="display:flex;gap:8px;justify-content:flex-end">
-        <button id="quoteCancel" type="button" class="btn secondary">Cancel</button>
-        <button id="quoteSave" type="button" class="btn">Save</button>
-      </menu>
-    </form>
-  </dialog>
-
-  <footer id="buildInfo"></footer>
-
-  <script>
-  "use strict";
-  window.addEventListener("DOMContentLoaded", () => {
-    // ===== (1) Manual version label + (2) auto date+time in footer =====
-    const VERSION = "v1.3"; // <- update when you want to mark a milestone
-    const buildStamp = new Date().toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-    document.getElementById('buildInfo').textContent = `Build ${VERSION} — Last updated: ${buildStamp}`;
-
-    // ===== State (v2 adds project_docs for attachments) =====
-    const KEY='a2a_data_v2';
-    let state = load();
-    function load(){
-      try{
-        const raw = localStorage.getItem(KEY);
-        const s = raw ? JSON.parse(raw) : {projects:[], quotes:[], project_docs:{}};
-        if(!s.project_docs) s.project_docs = {};
-        return s;
-      }catch{
-        return {projects:[], quotes:[], project_docs:{}};
+    function exportCsv(){
+      if(!currentRows.length){ alert('Nothing to export'); return; }
+      const headers = ['Vendor','Quote','Deposit','Timeline','Status','Docs','Lowest'];
+      const lines = [headers.join(',')];
+      for(const r of currentRows){
+        const line = [
+          safeCsv(r.vendor_name),
+          r.quote_total ?? '',
+          r.deposit ?? '',
+          safeCsv(r.timeline||''),
+          safeCsv(r.status||''),
+          r.docs_ok? 'Yes':'No',
+          r.is_lowest? 'Yes':'No'
+        ].join(',');
+        lines.push(line);
       }
-    }
-    function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
-    function uid(){ return Math.random().toString(36).slice(2,9); }
-
-    const $  = s => document.querySelector(s);
-    const $$ = s => Array.from(document.querySelectorAll(s));
-    function setStatus(m){ const el=$('#status'); if(el) el.textContent=m; }
-    function money(v){ if(v==null||v==='') return '—'; const n=+v; return isNaN(n)? v : n.toLocaleString(undefined,{style:'currency',currency:'USD'}); }
-    function currentProject(){ return state.projects.find(p => p.id === $('#projectSelect').value); }
-
-    // ===== Project Docs helpers =====
-    function ensureProjectDocs(pid){ if(!state.project_docs[pid]) state.project_docs[pid] = []; }
-    function renderProjectDocs(){
-      const p=currentProject();
-      const block = $('#docsBlock');
-      const list  = $('#docsList');
-      if(!block || !list) return;
-      if(!p){ block.style.display='none'; return; }
-      ensureProjectDocs(p.id);
-      const docs = state.project_docs[p.id];
-      block.style.display='block';
-      list.innerHTML='';
-      if(!docs.length){
-        const li=document.createElement('li');
-        li.innerHTML='<span class="hint">No attachments yet. Drag any file here or use Open File.</span>';
-        list.appendChild(li);
-        return;
-      }
-      docs.forEach(doc=>{
-        const li=document.createElement('li');
-        const a=document.createElement('a');
-        a.href = doc.dataURL || '#';
-        a.target = '_blank';
-        a.textContent = doc.name + (doc.size ? ` (${(doc.size/1024).toFixed(1)} KB)` : '');
-        const del=document.createElement('button');
-        del.className='btn danger';
-        del.textContent='Delete';
-        del.onclick=()=>{ deleteProjectDoc(p.id, doc.id); };
-        li.appendChild(a);
-        li.appendChild(del);
-        list.appendChild(li);
-      });
-    }
-    function addProjectDoc(file){
-      const p=currentProject();
-      if(!p){ alert('Create or select a project first to attach files.'); return; }
-      ensureProjectDocs(p.id);
-      // Persist small files as DataURL (localStorage limit ~5MB total; keep each file small)
-      const MAX = 2 * 1024 * 1024; // 2 MB per file for now
-      if(file.size > MAX){ alert('File is larger than 2 MB. Please attach a smaller file for now.'); return; }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const doc = { id:uid(), name:file.name, type:file.type, size:file.size, dataURL:String(reader.result), ts:Date.now() };
-        state.project_docs[p.id].push(doc);
-        save();
-        renderProjectDocs();
-        setStatus(`Attached: ${file.name}`);
-      };
-      reader.readAsDataURL(file);
-    }
-    function deleteProjectDoc(pid, docId){
-      state.project_docs[pid] = (state.project_docs[pid]||[]).filter(d=>d.id!==docId);
-      save(); renderProjectDocs(); setStatus('Attachment deleted.');
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `apples-to-apples-${currentProjectId}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
     }
 
-    // ===== Projects / Quotes =====
-    function refreshProjects(selId){
-      const s=$('#projectSelect'); s.innerHTML='';
-      if(!state.projects.length){
-        const opt=document.createElement('option');
-        opt.textContent='— No projects yet —';
-        opt.disabled=true; opt.selected=true;
-        s.appendChild(opt);
-        $('#projectHelp').textContent='Click “Add Project” to create your first project.';
-        $('#docsBlock').style.display='none';
-        $('#quotesBody').innerHTML='<tr><td colspan="8" class="hint">No project selected</td></tr>';
-        return;
-      }
-      state.projects.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; s.appendChild(o); });
-      s.value = selId || state.projects[0].id;
-      $('#projectHelp').textContent='';
-      renderProjectDocs();
+    function composeEmail(){
+      // Opens a prefilled email; user manually attaches CSV
+      const subject = encodeURIComponent('Apples-to-Apples Comparison CSV');
+      const body = encodeURIComponent('Hi Purchasing,\n\nAttached is the latest Apples-to-Apples comparison for the selected project.\n\nBest,\nMike');
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
     }
 
-    function projectQuotes(pid){
-      return state.quotes
-        .filter(q=>q.project_id===pid)
-        .sort((a,b)=>(a.amount??Infinity)-(b.amount??Infinity));
+    // ===== Utils =====
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
-
-    function renderQuotes(){
-      const p=currentProject(); const tb=$('#quotesBody'); tb.innerHTML='';
-      if(!p){ tb.innerHTML='<tr><td colspan="8" class="hint">No project selected</td></tr>'; $('#docsBlock').style.display='none'; return; }
-      const rows=projectQuotes(p.id);
-      if(!rows.length){ tb.innerHTML='<tr><td colspan="8" class="hint">No quotes</td></tr>'; }
-      else {
-        rows.forEach((q,i)=>{
-          const tr=document.createElement('tr');
-          tr.innerHTML = `
-            <td>${q.vendor||'—'}</td>
-            <td>${money(q.amount)}</td>
-            <td>${q.deposit||'—'}</td>
-            <td>${q.timeline||'—'}</td>
-            <td>${q.status||'—'}</td>
-            <td>${q.documents_complete?'✅':'❌'}</td>
-            <td>${i===0?'<span class="badge lowest">Lowest</span>':''}${(p.awarded_quote_id===q.id)?' <span class="badge" style="background:#93c5fd;color:#111827">Awarded</span>':''}</td>
-            <td>
-              <button class="btn warn" data-award="${q.id}">Award</button>
-              <button class="btn secondary" data-edit="${q.id}">Edit</button>
-              <button class="btn danger" data-del="${q.id}">Del</button>
-            </td>`;
-          tb.appendChild(tr);
-        });
-      }
-      $$('[data-award]').forEach(b=> b.onclick=()=>{ const p=currentProject(); p.awarded_quote_id=b.dataset.award; save(); renderQuotes(); setStatus('Awarded.'); });
-      $$('[data-del]').forEach(b=> b.onclick=()=>{ state.quotes=state.quotes.filter(x=>x.id!==b.dataset.del); save(); renderQuotes(); setStatus('Deleted.'); });
-      $$('[data-edit]').forEach(b=> b.onclick=()=> editQuote(b.dataset.edit));
-      renderProjectDocs();
+    function safeCsv(s){
+      const t = String(s||'');
+      return (/[",\n]/.test(t)) ? '"'+t.replace(/"/g,'""')+'"' : t;
     }
-
-    function editQuote(id){
-      const q=state.quotes.find(x=>x.id===id); if(!q) return;
-      $('#qVendor').value=q.vendor||''; $('#qAmount').value=q.amount??''; $('#qDeposit').value=q.deposit||'';
-      $('#qTimeline').value=q.timeline||''; $('#qStatus').value=q.status||''; $('#qDocs').value=String(!!q.documents_complete);
-      const d=$('#dlgQuote'); d.showModal();
-      $('#quoteCancel').onclick=()=> d.close();
-      $('#quoteSave').onclick=(e)=>{
-        e.preventDefault();
-        const vendor=$('#qVendor').value.trim();
-        const amountRaw=$('#qAmount').value.trim();
-        if(!vendor){ alert('Vendor is required.'); return; }
-        if(amountRaw==='' || isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
-        q.vendor=vendor; q.amount=Number(amountRaw);
-        q.deposit=$('#qDeposit').value.trim(); q.timeline=$('#qTimeline').value.trim();
-        q.status=$('#qStatus').value.trim(); q.documents_complete=($('#qDocs').value==='true');
-        save(); d.close(); renderQuotes(); setStatus('Quote updated.');
-      };
-    }
-
-    // ===== Import / Export =====
-    function csvEscape(v){ const s=String(v??''); return (s.includes('"')||s.includes(',')||s.includes('\n')) ? '"'+s.replace(/"/g,'""')+'"' : s; }
-    function exportCSV(){
-      const p=currentProject(); if(!p){ alert('Select a project first.'); return; }
-      const list=projectQuotes(p.id); if(!list.length){ alert('No quotes to export for this project.'); return; }
-      const rows=[['Vendor','Quote','Deposit','Timeline','Status','Docs']];
-      list.forEach(q=>{
-        const amount=(q.amount!==undefined && q.amount!==null && q.amount!=='') ? q.amount : '';
-        rows.push([ q.vendor||'', amount, q.deposit||'', q.timeline||'', q.status||'', q.documents_complete?'TRUE':'FALSE' ]);
-      });
-      const csv = rows.map(r => r.map(csvEscape).join(',')).join('\r\n');
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-      a.download=(p.name.replace(/\s+/g,'_'))+'_quotes.csv';
-      a.click();
-    }
-
-    function parseCSV(txt){
-      const l=txt.trim().split(/\r?\n/); if(!l.length) return [];
-      const h=l[0].toLowerCase().split(',').map(x=>x.trim());
-      const idx=k=>h.indexOf(k);
-      const arr=[];
-      for(let i=1;i<l.length;i++){
-        const c=l[i].split(',');
-        arr.push({
-          project:c[idx('project')]||'General',
-          vendor:c[idx('vendor')]||'',
-          amount:+(c[idx('quote')]||c[idx('amount')]||0),
-          deposit:c[idx('deposit')]||'',
-          timeline:c[idx('timeline')]||'',
-          status:c[idx('status')]||'',
-          documents_complete:(c[idx('documents_complete')]||'').toLowerCase()==='true'
-        });
-      }
-      return arr;
-    }
-
-    function importCSV(rows){
-      rows.forEach(r=>{
-        let p=state.projects.find(x=>x.name===r.project);
-        if(!p){ p={id:uid(),name:r.project,description:'Imported from CSV',awarded_quote_id:null}; state.projects.push(p); }
-        state.quotes.push({
-          id:uid(), project_id:p.id, vendor:r.vendor, amount:r.amount,
-          deposit:r.deposit, timeline:r.timeline, status:r.status,
-          documents_complete: !!r.documents_complete
-        });
-      });
-      save(); refreshProjects(); renderQuotes(); setStatus('CSV imported.');
-    }
-
-    function importJSON(obj){
-      if(obj.projects && obj.quotes){
-        state=obj; if(!state.project_docs) state.project_docs={};
-        save(); refreshProjects(); renderQuotes(); setStatus('JSON loaded.'); return;
-      }
-      if(Array.isArray(obj)){
-        const name = prompt('Project name for imported quotes?') || 'Imported';
-        const p={id:uid(),name,description:'Imported JSON',awarded_quote_id:null};
-        state.projects.push(p);
-        obj.forEach(r=>{
-          state.quotes.push({
-            id:uid(), project_id:p.id, vendor:r.vendor||'',
-            amount:+(r.amount||0), deposit:r.deposit||'',
-            timeline:r.timeline||'', status:r.status||'',
-            documents_complete: !!r.documents_complete
-          });
-        });
-        save(); refreshProjects(p.id); renderQuotes(); setStatus('JSON quotes imported.');
-      }
-    }
-
-    // ===== File + Drag&Drop =====
-    $('#btnImport').onclick = () => $('#fileInput').click();
-    $('#fileInput').onchange = (e) => handleFiles(e.target.files);
-
-    function handleFiles(files){
-      if(!files || !files.length) return;
-      const f = files[0];
-      const name = f.name.toLowerCase();
-
-      // CSV/JSON → import
-      if (name.endsWith('.json')) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          try { importJSON(JSON.parse(reader.result)); }
-          catch(err){ alert('JSON import failed: ' + err.message); }
-        };
-        reader.readAsText(f);
-        return;
-      }
-      if (name.endsWith('.csv')) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          try { importCSV(parseCSV(reader.result)); }
-          catch(err){ alert('CSV import failed: ' + err.message); }
-        };
-        reader.readAsText(f);
-        return;
-      }
-
-      // Anything else → attach to current project
-      addProjectDoc(f);
-    }
-
-    const drop = $('#drop');
-    ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('drag'); }));
-    ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('drag'); }));
-    drop.addEventListener('drop', e=> handleFiles(e.dataTransfer.files));
-
-    // ===== Add Project =====
-    $('#btnAddProject').onclick = () => {
-      $('#projName').value=''; $('#projDesc').value='';
-      const d=$('#dlgProject'); d.showModal();
-      $('#projCancel').onclick=()=> d.close();
-      $('#projSave').onclick=()=>{
-        const name=$('#projName').value.trim();
-        if(!name){ alert('Project name is required.'); return; }
-        const p={ id:uid(), name, description:$('#projDesc').value.trim(), awarded_quote_id:null };
-        state.projects.unshift(p); save(); d.close();
-        refreshProjects(p.id); renderQuotes(); setStatus('Project created.');
-      };
-    };
-
-    // ===== Add Quote =====
-    $('#btnAddQuote').onclick = () => {
-      if(!currentProject()){ alert('Create or select a project first.'); return; }
-      $('#qVendor').value=''; $('#qAmount').value=''; $('#qDeposit').value='';
-      $('#qTimeline').value=''; $('#qStatus').value=''; $('#qDocs').value='false';
-      const d=$('#dlgQuote'); d.showModal();
-      $('#quoteCancel').onclick=()=> d.close();
-      $('#quoteSave').onclick=(e)=>{
-        e.preventDefault();
-        const p=currentProject(); if(!p) return;
-        const vendor=$('#qVendor').value.trim();
-        const amountRaw=$('#qAmount').value.trim();
-        if(!vendor){ alert('Vendor is required.'); return; }
-        if(amountRaw==='' || isNaN(Number(amountRaw))){ alert('Quote amount is required and must be a number.'); return; }
-        const q={ id:uid(), project_id:p.id, vendor,
-                  amount:Number(amountRaw),
-                  deposit:$('#qDeposit').value.trim(),
-                  timeline:$('#qTimeline').value.trim(),
-                  status:$('#qStatus').value.trim(),
-                  documents_complete: ($('#qDocs').value==='true') };
-        state.quotes.push(q); save(); d.close(); renderQuotes(); setStatus('Quote added.');
-      };
-    };
-
-    // ===== Export / Save =====
-    $('#btnExportCsv').onclick = exportCSV;
-    $('#btnSaveJson').onclick = () => {
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
-      a.download='a2a_data.json';
-      a.click();
-    };
-
-    // ===== Clear All with strong warning + code =====
-    $('#btnClear').onclick = () => {
-      const code = prompt(
-        "⚠️ CAUTION ⚠️\n\n" +
-        "This will clear ALL projects and quotes from this browser.\n\n" +
-        "If you really want to do this, type the safety code: NFPA99"
-      );
-      if (code === null) return; // cancelled
-      if (code.trim().toUpperCase() === "NFPA99") {
-        localStorage.removeItem(KEY);
-        state = load();
-        refreshProjects();
-        renderQuotes();
-        setStatus("All local data cleared.");
-        alert("✅ All data cleared.");
-      } else {
-        alert("❌ Incorrect code. Nothing was cleared.");
-      }
-    };
-
-    // ===== Init =====
-    refreshProjects();
-    renderQuotes();
-    renderProjectDocs();
-  });
   </script>
 </body>
 </html>
