@@ -449,6 +449,22 @@
       const t = String(s||'');
       return (/[",\n]/.test(t)) ? '"'+t.replace(/"/g,'""')+'"' : t;
     }
+  async function awardVendor(r){
+  if(!confirm(`Award to ${r.vendor_name}?`)) return;
+
+  const { error } = await supabase
+    .from(TABLES.PROJECT)
+    .update({ awarded_quote_id: r.quote_id })
+    .eq('id', r.project_id);
+
+  if(error){ console.error(error); alert('Error awarding vendor'); return; }
+
+  // Remember which one is awarded and re-render (hides buttons, shows badge)
+  currentAwardedId = r.quote_id;
+  renderGrid();
+  alert('Awarded!');
+}
+
   </script>
 </body>
 </html>
