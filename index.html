@@ -195,7 +195,8 @@
     }
 
     async function loadProjects(){
-      const { data, error } = await supabase.from(TABLES.PROJECT).select('id,name').order('name');
+      const { data, error } = await supabase.from(TABLES.PROJECT).select('id,name');
+
       if(error){ console.error(error); alert('Error loading projects'); return; }
       for (const p of data){
         const opt = document.createElement('option');
