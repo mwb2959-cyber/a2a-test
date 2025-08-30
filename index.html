@@ -142,9 +142,8 @@
     const TABLES = {
       PROJECT: "project",
       QUOTE:   "quotes",
-      VIEW_RANKED: "apples_to_apples_rank", // <- note: no "ed"
+      VIEW_RANKED: "apples_to_apples_rank",  // we'll try this first, then fall back to QUOTE
     };
-    // VIEW expects: quote_id, project_id, vendor_name, quote_total, deposit, timeline, status, docs_ok (bool), is_lowest (bool)
 
     // =====================
     //  SUPABASE CLIENT
@@ -239,6 +238,25 @@
     btnEmailPurchasing.addEventListener('click', () => composeEmail());
 
     // =====================
+    //  DATA HELPERS
+    // =====================
+    async function fetchRowsViaView(projectId){
+      return await supabase
+        .from(TABLES.VIEW_RANKED)
+        .select('*')
+        .eq('project_id', projectId)
+        .order('quote_total', { ascending: true });
+    }
+
+    async function fetchRowsViaQuotes(projectId){
+      return await supabase
+        .from(TABLES.QUOTE)
+        .select('id, project_id, vendor_name, quote_total, deposit, timeline, status')
+        .eq('project_id', projectId)
+        .order('quote_total', { ascending: true });
+    }
+
+    // =====================
     //  DATA / RENDER
     // =====================
     async function refreshGrid(){
@@ -255,21 +273,40 @@
       if (projErr) { console.error(projErr); alert('Error loading project'); return; }
       currentAwardedId = proj?.awarded_quote_id || null;
 
-      // 2) Load quotes (view)
-      const { data, error } = await supabase
-        .from(TABLES.VIEW_RANKED)
-        .select('*')
-        .eq('project_id', currentProjectId)
-        .order('quote_total', { ascending: true });
+      // 2) Try the VIEW first; if it errors or returns empty, fall back to QUOTES
+      let data = null, error = null, used = 'view';
+
+      ({ data, error } = await fetchRowsViaView(currentProjectId));
+      if (error || !Array.isArray(data) || data.length === 0) {
+        ({ data, error } = await fetchRowsViaQuotes(currentProjectId));
+        used = 'quotes';
+      }
 
       if(error){ console.error(error); alert('Error loading quotes'); return; }
 
-      // 3) Ensure lowest flag if the view doesn’t provide it
-      const lowest = data?.length ? Math.min(...data.map(r => Number(r.quote_total || Infinity))) : null;
-      currentRows = (data || []).map(r => ({
-        ...r,
-        is_lowest: typeof r.is_lowest === 'boolean' ? r.is_lowest : (Number(r.quote_total) === lowest)
-      }));
+      // 3) Normalize fields and compute lowest
+      const lowest = data?.length ? Math.min(...data.map(r => Number((r.quote_total ?? Infinity)))) : null;
+
+      currentRows = (data || []).map(r => {
+        if (used === 'quotes') {
+          return {
+            quote_id: r.id,
+            project_id: r.project_id,
+            vendor_name: r.vendor_name,
+            quote_total: r.quote_total,
+            deposit: r.deposit,
+            timeline: r.timeline,
+            status: r.status,
+            docs_ok: false, // not present in the table; default to false
+            is_lowest: Number(r.quote_total) === lowest
+          };
+        }
+        // used === 'view' (already has the right columns)
+        return {
+          ...r,
+          is_lowest: typeof r.is_lowest === 'boolean' ? r.is_lowest : (Number(r.quote_total) === lowest)
+        };
+      });
 
       renderGrid();
     }
