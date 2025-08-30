@@ -239,6 +239,38 @@
     btnEmailPurchasing.addEventListener('click', () => composeEmail());
 
     async function refreshGrid(){
+  gridBody.innerHTML = '';
+  if(!currentProjectId){ emptyState.classList.remove('hidden'); return; }
+  emptyState.classList.add('hidden');
+
+  // Get the project's awarded_quote_id
+  const { data: proj, error: projErr } = await supabase
+    .from(TABLES.PROJECT)
+    .select('awarded_quote_id')
+    .eq('id', currentProjectId)
+    .single();
+  if (projErr) { console.error(projErr); alert('Error loading project'); return; }
+  currentAwardedId = proj?.awarded_quote_id || null;
+
+  // Pull ranked view for this project
+  const { data, error } = await supabase
+    .from(TABLES.VIEW_RANKED)
+    .select('*')
+    .eq('project_id', currentProjectId)
+    .order('quote_total', { ascending: true });
+
+  if(error){ console.error(error); alert('Error loading quotes'); return; }
+
+  // Compute lowest if view doesn't provide it
+  const lowest = data?.length ? Math.min(...data.map(r => Number(r.quote_total || Infinity))) : null;
+  currentRows = (data || []).map(r => ({
+    ...r,
+    is_lowest: typeof r.is_lowest === 'boolean' ? r.is_lowest : (Number(r.quote_total) === lowest)
+  }));
+  renderGrid();
+}
+
+    async function refreshGrid(){
       gridBody.innerHTML = '';
       if(!currentProjectId){ emptyState.classList.remove('hidden'); return; }
       emptyState.classList.add('hidden');
