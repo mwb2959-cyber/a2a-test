@@ -370,6 +370,35 @@
     </tr>`;
 }
 
+    function rowHtml(r){
+  const money = (v) => v==null ? '—' : `$${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+
+  // Decide badges
+  const badges = [
+    r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : '',
+    (currentAwardedId === r.quote_id) ? `<span class="badge" style="background:#bfdbfe;color:#1e3a8a;border:1px solid #93c5fd">Awarded</span>` : ''
+  ].filter(Boolean).join(' ');
+
+  // Decide actions: hide Award button once a vendor is awarded
+  const actions = (currentAwardedId)
+    ? ''
+    : `<button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
+
+  return `
+    <tr>
+      <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
+      <td class="px-4 py-3">${money(r.quote_total)}</td>
+      <td class="px-4 py-3">${money(r.deposit)}</td>
+      <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
+      <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
+      <td class="px-4 py-3">
+        ${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
+      </td>
+      <td class="px-4 py-3">${badges}</td>
+      <td class="px-4 py-3 text-right">${actions}</td>
+    </tr>`;
+}
+
     async function awardVendor(r){
       if(!confirm(`Award to ${r.vendor_name}?`)) return;
       // Update Project.awarded_quote_id
