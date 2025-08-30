@@ -305,6 +305,21 @@
       });
     }
 
+    function renderGrid(){
+  const q = (inputSearch.value || '').toLowerCase();
+  const rows = currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q));
+  gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
+  hydrateIcons();
+
+  // Only wire Award buttons if nothing has been awarded yet
+  if (!currentAwardedId) {
+    rows.forEach(r => {
+      const btn = document.getElementById(`award-${r.quote_id}`);
+      if(btn){ btn.addEventListener('click', () => awardVendor(r)); }
+    });
+  }
+}
+
     function rowHtml(r){
       const money = (v) => v==null? '—' : `$${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
       return `
