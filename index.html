@@ -4,19 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Apples-to-Apples</title>
-  <!-- Tailwind (CDN for quick GitHub Pages deploy) -->
+
+  <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase JS v2 -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    /* Simple GridHUD feel */
+
+  <!-- Tailwind utility styles using @apply -->
+  <style type="text/tailwindcss">
     .hud-card { @apply bg-white/90 backdrop-blur rounded-2xl shadow-lg border border-slate-200; }
-    .badge    { @apply text-xs font-semibold px-2 py-1 rounded-full; }
-    .badge-lowest { @apply bg-emerald-100 text-emerald-700 border border-emerald-200; }
-    .badge-docs-ok { @apply bg-blue-100 text-blue-700 border border-blue-200; }
-    .badge-missing { @apply bg-rose-100 text-rose-700 border border-rose-200; }
+    .badge { @apply inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full border; }
+    .badge-lowest { @apply bg-emerald-100 text-emerald-700 border-emerald-200; }
+    .badge-docs-ok { @apply bg-blue-100 text-blue-700 border-blue-200; }
+    .badge-missing { @apply bg-rose-100 text-rose-700 border-rose-200; }
+    .badge-awarded { @apply bg-sky-100 text-sky-800 border-sky-200; }
     .btn { @apply inline-flex items-center gap-2 rounded-xl px-3 py-2 border shadow-sm hover:shadow-md transition; }
     .btn-primary { @apply bg-black text-white border-black; }
     .btn-ghost { @apply bg-white text-slate-700 border-slate-200; }
@@ -27,12 +28,12 @@
   </style>
 </head>
 <body class="min-h-screen bg-slate-50">
-  <!-- App Shell -->
+  <!-- Header -->
   <header class="sticky top-0 z-20 bg-white/80 backdrop-blur border-b border-slate-200">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <div class="h-9 w-9 rounded-xl bg-emerald-600 grid place-content-center text-white font-black">A²</div>
-        <h1 class="text-xl font-bold">Apples‑to‑Apples</h1>
+        <h1 class="text-xl font-bold">Apples-to-Apples</h1>
       </div>
       <nav class="flex items-center gap-2">
         <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV">
@@ -45,8 +46,9 @@
     </div>
   </header>
 
+  <!-- Main -->
   <main class="max-w-7xl mx-auto p-4 grid md:grid-cols-12 gap-4">
-    <!-- Filters / Project Picker -->
+    <!-- Controls -->
     <section class="md:col-span-12 hud-card p-4">
       <div class="grid md:grid-cols-3 gap-3 items-end">
         <label class="block">
@@ -66,7 +68,7 @@
       </div>
     </section>
 
-    <!-- Grid / Table -->
+    <!-- Grid -->
     <section class="md:col-span-12 hud-card p-0 overflow-hidden">
       <div class="overflow-x-auto">
         <table class="table" id="grid">
@@ -89,7 +91,7 @@
     </section>
   </main>
 
-  <!-- Modal (New Quote) -->
+  <!-- New Quote Modal -->
   <dialog id="dlgQuote" class="w-full max-w-xl rounded-2xl p-0 border border-slate-200 shadow-xl">
     <form method="dialog">
       <header class="flex items-center justify-between px-4 py-3 border-b">
@@ -129,6 +131,7 @@
     </form>
   </dialog>
 
+  <!-- App Script -->
   <script type="module">
     // =====================
     //  CONFIG
@@ -136,15 +139,12 @@
     const SUPABASE_URL = "https://bqwovrxpgrlbnczerzbm.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxd292cnhwZ3JsYm5jemVyemJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MDcyMDIsImV4cCI6MjA3MjA4MzIwMn0.rZW766TNcEjvc8h2Ilmo4jU0_TXbPzMGAg7wAZvRxD8";
 
-    // Table / view names (adjust to your exact casing if different)
     const TABLES = {
       PROJECT: "Project",
       QUOTE: "Quote",
-      VIEW_RANKED: "apples_to_apples_ranked", // expects columns listed below
+      VIEW_RANKED: "apples_to_apples_ranked",
     };
-
-    // Expected columns from VIEW_RANKED:
-    // quote_id, project_id, vendor_name, quote_total, deposit, timeline, status, docs_ok (bool), is_lowest (bool)
+    // VIEW expects: quote_id, project_id, vendor_name, quote_total, deposit, timeline, status, docs_ok (bool), is_lowest (bool)
 
     // =====================
     //  SUPABASE CLIENT
@@ -153,7 +153,7 @@
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // =====================
-    //  DOM REFS
+    //  DOM
     // =====================
     const selectProject = document.getElementById('selectProject');
     const inputSearch   = document.getElementById('inputSearch');
@@ -161,7 +161,6 @@
     const btnExportCsv  = document.getElementById('btnExportCsv');
     const btnEmailPurchasing = document.getElementById('btnEmailPurchasing');
     const btnNewQuote   = document.getElementById('btnNewQuote');
-
     const gridBody      = document.getElementById('gridBody');
     const emptyState    = document.getElementById('emptyState');
 
@@ -173,10 +172,12 @@
     const qStatus       = document.getElementById('qStatus');
     const btnSaveQuote  = document.getElementById('btnSaveQuote');
 
+    // =====================
+    //  STATE
+    // =====================
     let currentProjectId = null;
     let currentRows = [];
-    let currentAwardedId = null;   // track which quote_id is awarded
-
+    let currentAwardedId = null; // which quote_id is awarded
 
     // =====================
     //  INIT
@@ -190,7 +191,7 @@
       document.querySelectorAll('.i').forEach(el => {
         const name = el.getAttribute('data-icon');
         try { lucide.createIcons({ icons: { [name]: lucide[name] } }); } catch {}
-        el.innerHTML = `<svg data-lucide="${name}" class="w-4 h-4"></svg>`;
+        el.innerHTML = `<svg data-lucide="\${name}" class="w-4 h-4"></svg>`;
       });
       try { lucide.createIcons(); } catch {}
     }
@@ -200,7 +201,7 @@
       if(error){ console.error(error); alert('Error loading projects'); return; }
       for (const p of data){
         const opt = document.createElement('option');
-        opt.value = p.id; opt.textContent = p.name || `Project ${p.id}`;
+        opt.value = p.id; opt.textContent = p.name || `Project \${p.id}`;
         selectProject.appendChild(opt);
       }
     }
@@ -238,44 +239,24 @@
     btnExportCsv.addEventListener('click', () => exportCsv());
     btnEmailPurchasing.addEventListener('click', () => composeEmail());
 
-    async function refreshGrid(){
-  gridBody.innerHTML = '';
-  if(!currentProjectId){ emptyState.classList.remove('hidden'); return; }
-  emptyState.classList.add('hidden');
-
-  // Get the project's awarded_quote_id
-  const { data: proj, error: projErr } = await supabase
-    .from(TABLES.PROJECT)
-    .select('awarded_quote_id')
-    .eq('id', currentProjectId)
-    .single();
-  if (projErr) { console.error(projErr); alert('Error loading project'); return; }
-  currentAwardedId = proj?.awarded_quote_id || null;
-
-  // Pull ranked view for this project
-  const { data, error } = await supabase
-    .from(TABLES.VIEW_RANKED)
-    .select('*')
-    .eq('project_id', currentProjectId)
-    .order('quote_total', { ascending: true });
-
-  if(error){ console.error(error); alert('Error loading quotes'); return; }
-
-  // Compute lowest if view doesn't provide it
-  const lowest = data?.length ? Math.min(...data.map(r => Number(r.quote_total || Infinity))) : null;
-  currentRows = (data || []).map(r => ({
-    ...r,
-    is_lowest: typeof r.is_lowest === 'boolean' ? r.is_lowest : (Number(r.quote_total) === lowest)
-  }));
-  renderGrid();
-}
-
+    // =====================
+    //  DATA / RENDER
+    // =====================
     async function refreshGrid(){
       gridBody.innerHTML = '';
       if(!currentProjectId){ emptyState.classList.remove('hidden'); return; }
       emptyState.classList.add('hidden');
 
-      // Pull ranked view for this project
+      // 1) Read awarded id for project
+      const { data: proj, error: projErr } = await supabase
+        .from(TABLES.PROJECT)
+        .select('awarded_quote_id')
+        .eq('id', currentProjectId)
+        .single();
+      if (projErr) { console.error(projErr); alert('Error loading project'); return; }
+      currentAwardedId = proj?.awarded_quote_id || null;
+
+      // 2) Load quotes
       const { data, error } = await supabase
         .from(TABLES.VIEW_RANKED)
         .select('*')
@@ -284,12 +265,13 @@
 
       if(error){ console.error(error); alert('Error loading quotes'); return; }
 
-      // Compute lowest if view doesn't provide it
+      // 3) Ensure lowest flag if the view doesn’t provide it
       const lowest = data?.length ? Math.min(...data.map(r => Number(r.quote_total || Infinity))) : null;
       currentRows = (data || []).map(r => ({
         ...r,
         is_lowest: typeof r.is_lowest === 'boolean' ? r.is_lowest : (Number(r.quote_total) === lowest)
       }));
+
       renderGrid();
     }
 
@@ -298,121 +280,63 @@
       const rows = currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q));
       gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
       hydrateIcons();
-      // wire action buttons
-      rows.forEach(r => {
-        const btn = document.getElementById(`award-${r.quote_id}`);
-        if(btn){ btn.addEventListener('click', () => awardVendor(r)); }
-      });
+
+      // Wire Award buttons ONLY if we haven't awarded yet
+      if (!currentAwardedId) {
+        rows.forEach(r => {
+          const btn = document.getElementById(`award-\${r.quote_id}`);
+          if(btn){ btn.addEventListener('click', () => awardVendor(r)); }
+        });
+      }
     }
 
-    function renderGrid(){
-  const q = (inputSearch.value || '').toLowerCase();
-  const rows = currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q));
-  gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
-  hydrateIcons();
-
-  // Only wire Award buttons if nothing has been awarded yet
-  if (!currentAwardedId) {
-    rows.forEach(r => {
-      const btn = document.getElementById(`award-${r.quote_id}`);
-      if(btn){ btn.addEventListener('click', () => awardVendor(r)); }
-    });
-  }
-}
-
     function rowHtml(r){
-      const money = (v) => v==null? '—' : `$${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+      const money = (v) => v==null? '—' : `$\${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+
+      // badges
+      const badges = [
+        r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : '',
+        (currentAwardedId === r.quote_id) ? `<span class="badge badge-awarded">Awarded</span>` : ''
+      ].filter(Boolean).join(' ');
+
+      // actions: hide award once something is awarded
+      const actions = (currentAwardedId)
+        ? ''
+        : `<button id="award-\${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
+
       return `
         <tr>
-          <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
-          <td class="px-4 py-3">${money(r.quote_total)}</td>
-          <td class="px-4 py-3">${money(r.deposit)}</td>
-          <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
-          <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
+          <td class="px-4 py-3 font-medium">\${escapeHtml(r.vendor_name||'')}</td>
+          <td class="px-4 py-3">\${money(r.quote_total)}</td>
+          <td class="px-4 py-3">\${money(r.deposit)}</td>
+          <td class="px-4 py-3">\${escapeHtml(r.timeline||'—')}</td>
+          <td class="px-4 py-3">\${escapeHtml(r.status||'—')}</td>
           <td class="px-4 py-3">
-            ${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
+            \${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
           </td>
-          <td class="px-4 py-3">
-            ${r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : ''}
-          </td>
-          <td class="px-4 py-3 text-right">
-            <button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>
-          </td>
+          <td class="px-4 py-3">\${badges}</td>
+          <td class="px-4 py-3 text-right">\${actions}</td>
         </tr>`;
     }
 
-    function rowHtml(r){
-  const money = (v) => v==null ? '—' : `$${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
-
-  // Decide badges
-  const badges = [
-    r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : '',
-    (currentAwardedId === r.quote_id) ? `<span class="badge" style="background:#bfdbfe;color:#1e3a8a;border:1px solid #93c5fd">Awarded</span>` : ''
-  ].filter(Boolean).join(' ');
-
-  // Decide actions: hide Award button once a vendor is awarded
-  const actions = (currentAwardedId)
-    ? ''
-    : `<button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
-
-  return `
-    <tr>
-      <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
-      <td class="px-4 py-3">${money(r.quote_total)}</td>
-      <td class="px-4 py-3">${money(r.deposit)}</td>
-      <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
-      <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
-      <td class="px-4 py-3">
-        ${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
-      </td>
-      <td class="px-4 py-3">${badges}</td>
-      <td class="px-4 py-3 text-right">${actions}</td>
-    </tr>`;
-}
-
-    function rowHtml(r){
-  const money = (v) => v==null ? '—' : `$${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
-
-  // Decide badges
-  const badges = [
-    r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : '',
-    (currentAwardedId === r.quote_id) ? `<span class="badge" style="background:#bfdbfe;color:#1e3a8a;border:1px solid #93c5fd">Awarded</span>` : ''
-  ].filter(Boolean).join(' ');
-
-  // Decide actions: hide Award button once a vendor is awarded
-  const actions = (currentAwardedId)
-    ? ''
-    : `<button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
-
-  return `
-    <tr>
-      <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
-      <td class="px-4 py-3">${money(r.quote_total)}</td>
-      <td class="px-4 py-3">${money(r.deposit)}</td>
-      <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
-      <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
-      <td class="px-4 py-3">
-        ${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
-      </td>
-      <td class="px-4 py-3">${badges}</td>
-      <td class="px-4 py-3 text-right">${actions}</td>
-    </tr>`;
-}
-
+    // =====================
+    //  ACTIONS
+    // =====================
     async function awardVendor(r){
-      if(!confirm(`Award to ${r.vendor_name}?`)) return;
-      // Update Project.awarded_quote_id
+      if(!confirm(\`Award to \${r.vendor_name}?\`)) return;
       const { error } = await supabase
         .from(TABLES.PROJECT)
         .update({ awarded_quote_id: r.quote_id })
         .eq('id', r.project_id);
       if(error){ console.error(error); alert('Error awarding vendor'); return; }
+      currentAwardedId = r.quote_id;
+      renderGrid();
       alert('Awarded!');
     }
 
     function exportCsv(){
       if(!currentRows.length){ alert('Nothing to export'); return; }
-      const headers = ['Vendor','Quote','Deposit','Timeline','Status','Docs','Lowest'];
+      const headers = ['Vendor','Quote','Deposit','Timeline','Status','Docs','Lowest','Awarded'];
       const lines = [headers.join(',')];
       for(const r of currentRows){
         const line = [
@@ -422,49 +346,35 @@
           safeCsv(r.timeline||''),
           safeCsv(r.status||''),
           r.docs_ok? 'Yes':'No',
-          r.is_lowest? 'Yes':'No'
+          r.is_lowest? 'Yes':'No',
+          (currentAwardedId === r.quote_id)? 'Yes':'No'
         ].join(',');
         lines.push(line);
       }
       const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `apples-to-apples-${currentProjectId}.csv`;
+      a.href = url; a.download = \`apples-to-apples-\${currentProjectId}.csv\`;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     }
 
     function composeEmail(){
-      // Opens a prefilled email; user manually attaches CSV
       const subject = encodeURIComponent('Apples-to-Apples Comparison CSV');
       const body = encodeURIComponent('Hi Purchasing,\n\nAttached is the latest Apples-to-Apples comparison for the selected project.\n\nBest,\nMike');
-      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+      window.location.href = \`mailto:?subject=\${subject}&body=\${body}\`;
     }
 
-    // ===== Utils =====
+    // =====================
+    //  UTILS
+    // =====================
     function escapeHtml(s){
-      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+      return String(s).replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
     function safeCsv(s){
       const t = String(s||'');
       return (/[",\n]/.test(t)) ? '"'+t.replace(/"/g,'""')+'"' : t;
     }
-  async function awardVendor(r){
-  if(!confirm(`Award to ${r.vendor_name}?`)) return;
-
-  const { error } = await supabase
-    .from(TABLES.PROJECT)
-    .update({ awarded_quote_id: r.quote_id })
-    .eq('id', r.project_id);
-
-  if(error){ console.error(error); alert('Error awarding vendor'); return; }
-
-  // Remember which one is awarded and re-render (hides buttons, shows badge)
-  currentAwardedId = r.quote_id;
-  renderGrid();
-  alert('Awarded!');
-}
-
   </script>
 </body>
 </html>
