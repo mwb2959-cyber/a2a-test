@@ -38,50 +38,42 @@
 <body class="min-h-screen bg-slate-50">
   <!-- Header -->
   <header class="sticky top-0 z-20 bg-green-400 backdrop-blur border-b border-slate-200">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-  <!-- Triple apples logo -->
-  <div class="flex items-center gap-1">
-    <!-- Left apple -->
-    <div class="relative h-10 w-10 grid place-content-center">
-      <span class="text-[30px] leading-none select-none">🍎</span>
-    </div>
-    <!-- Center apple with A2a overlay -->
-    <div class="relative h-10 w-10 grid place-content-center">
-      <span class="text-[30px] leading-none select-none">🍏</span>
-      <span class="absolute inset-0 grid place-content-center text-[13px] font-black text-white"
-            style="text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;">
-        A2a
-      </span>
-    </div>
-    <!-- Right apple -->
-    <div class="relative h-10 w-10 grid place-content-center">
-      <span class="text-[30px] leading-none select-none">🍎</span>
-    </div>
-  </div>
-
-  <!-- Title -->
-  <h1 class="text-xl font-bold outlined-text">Apples-to-Apples</h1>
-</div>
-
-  <!-- Right apple -->
-  <div class="relative h-10 w-10 grid place-content-center">
-    <span class="text-[30px] leading-none select-none">🍎</span>
-  </div>
-</div>
-
-        <h1 class="text-xl font-bold outlined-text">Apples-to-Apples</h1>
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <!-- LEFT: triple apples + title -->
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1">
+        <!-- Left apple -->
+        <div class="relative h-10 w-10 grid place-content-center">
+          <span class="text-[30px] leading-none select-none">🍎</span>
+        </div>
+        <!-- Center apple with A2a overlay -->
+        <div class="relative h-10 w-10 grid place-content-center">
+          <span class="text-[30px] leading-none select-none">🍏</span>
+          <span class="absolute inset-0 grid place-content-center text-[13px] font-black text-white"
+                style="text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;">
+            A2a
+          </span>
+        </div>
+        <!-- Right apple -->
+        <div class="relative h-10 w-10 grid place-content-center">
+          <span class="text-[30px] leading-none select-none">🍎</span>
+        </div>
       </div>
-      <nav class="flex items-center gap-2">
-        <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV">
-          <span class="i" data-icon="download"></span> Export CSV
-        </button>
-        <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
-          <span class="i" data-icon="mail"></span> Email Purchasing
-        </button>
-      </nav>
+
+      <h1 class="text-xl font-bold outlined-text">Apples-to-Apples</h1>
     </div>
-  </header>
+
+    <!-- RIGHT: buttons -->
+    <nav class="flex items-center gap-2">
+      <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV">
+        <span class="i" data-icon="download"></span> Export CSV
+      </button>
+      <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
+        <span class="i" data-icon="mail"></span> Email Purchasing
+      </button>
+    </nav>
+  </div>
+</header>
 
   <!-- Main -->
   <main class="max-w-7xl mx-auto p-4 grid md:grid-cols-12 gap-4">
