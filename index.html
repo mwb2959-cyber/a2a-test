@@ -370,49 +370,51 @@
       renderGrid();
     }
 
-    function renderGrid(){
-      const q = (inputSearch.value || '').toLowerCase();
-      const rows = currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q));
-      gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
-      hydrateIcons();
+     function renderGrid(){
+  const q = (inputSearch.value || '').toLowerCase();
+  const rows = currentRows.filter(r => !q || (r.vendor_name || '').toLowerCase().includes(q));
+  gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
+  hydrateIcons();
 
-      // Wire Award buttons ONLY if we haven't awarded yet
-      if (!currentAwardedId) {
-        rows.forEach(r => {
-          const btn = document.getElementById(`award-${r.quote_id}`);
-          if(btn){ btn.addEventListener('click', () => awardVendor(r)); }
-        });
-      }
-        updateExportEnabled();   // keep Export CSV button in sync
+  // Wire Award buttons ONLY if we haven't awarded yet
+  if (!currentAwardedId) {
+    rows.forEach(r => {
+      const btn = document.getElementById(`award-${r.quote_id}`);
+      if (btn) { btn.addEventListener('click', () => awardVendor(r)); }
+    });
+  }
+
+  updateExportEnabled(); // keep Export CSV button in sync
 }
-    }
 
-    function rowHtml(r){
-      const money = (v) => v==null? '—' : `$${Number(v).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+function rowHtml(r){
+  const money = (v) => v == null
+    ? '—'
+    : `$${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-      const badges = [
-        r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : '',
-        (currentAwardedId === r.quote_id) ? `<span class="badge badge-awarded">Awarded</span>` : ''
-      ].filter(Boolean).join(' ');
+  const badges = [
+    r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : '',
+    (currentAwardedId === r.quote_id) ? `<span class="badge badge-awarded">Awarded</span>` : ''
+  ].filter(Boolean).join(' ');
 
-      const actions = (currentAwardedId)
-        ? ''
-        : `<button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
+  const actions = (currentAwardedId)
+    ? ''
+    : `<button id="award-\${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
 
-      return `
-        <tr>
-          <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
-          <td class="px-4 py-3">${money(r.quote_total)}</td>
-          <td class="px-4 py-3">${money(r.deposit)}</td>
-          <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
-          <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
-          <td class="px-4 py-3">
-            ${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
-          </td>
-          <td class="px-4 py-3">${badges}</td>
-          <td class="px-4 py-3 text-right">${actions}</td>
-        </tr>`;
-    }
+  return `
+    <tr>
+      <td class="px-4 py-3 font-medium">\${escapeHtml(r.vendor_name || '')}</td>
+      <td class="px-4 py-3">\${money(r.quote_total)}</td>
+      <td class="px-4 py-3">\${money(r.deposit)}</td>
+      <td class="px-4 py-3">\${escapeHtml(r.timeline || '—')}</td>
+      <td class="px-4 py-3">\${escapeHtml(r.status || '—')}</td>
+      <td class="px-4 py-3">
+        \${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
+      </td>
+      <td class="px-4 py-3">\${badges}</td>
+      <td class="px-4 py-3 text-right">\${actions}</td>
+    </tr>`;
+}
 
     // =====================
     //  ACTIONS
