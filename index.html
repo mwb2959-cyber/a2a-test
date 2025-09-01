@@ -383,6 +383,8 @@
           if(btn){ btn.addEventListener('click', () => awardVendor(r)); }
         });
       }
+        updateExportEnabled();   // keep Export CSV button in sync
+}
     }
 
     function rowHtml(r){
