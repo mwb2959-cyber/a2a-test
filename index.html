@@ -244,10 +244,11 @@
       }
     }
 
-    selectProject.addEventListener('change', async () => {
-      currentProjectId = selectProject.value || null;
-      await refreshGrid();
-    });
+   selectProject.addEventListener('change', async () => {
+  currentProjectId = selectProject.value || null;
+  await refreshGrid();
+  updateExportEnabled();   // refresh Export state after project change
+}); 
 
     inputSearch.addEventListener('input', () => renderGrid());
     btnRefresh.addEventListener('click', () => refreshGrid());
