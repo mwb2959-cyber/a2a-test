@@ -250,7 +250,10 @@
   updateExportEnabled();   // refresh Export state after project change
 }); 
 
-    inputSearch.addEventListener('input', () => renderGrid());
+    inputSearch.addEventListener('input', () => {
+  renderGrid();
+  updateExportEnabled();   // keep Export button in sync with search results
+});
     btnRefresh.addEventListener('click', () => refreshGrid());
 
     btnNewQuote.addEventListener('click', () => {
