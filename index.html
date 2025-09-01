@@ -272,6 +272,21 @@
       dlgQuote.close();
       await refreshGrid();
     });
+        // Allow ESC key to close the dialog (prevents required-field validation)
+    dlgQuote.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      dlgQuote.close();
+    });
+
+    // Allow clicking outside the white modal to close it
+    dlgQuote.addEventListener('click', (e) => {
+      const rect = dlgQuote.getBoundingClientRect();
+      const insideDialog =
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+      if (!insideDialog) dlgQuote.close();
+    });
 
     btnExportCsv.addEventListener('click', () => exportCsv());
     btnEmailPurchasing.addEventListener('click', () => composeEmail());
