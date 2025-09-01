@@ -220,9 +220,10 @@
     //  INIT
     // =====================
     document.addEventListener('DOMContentLoaded', async () => {
-      hydrateIcons();
-      await loadProjects();
-    });
+  hydrateIcons();
+  await loadProjects();
+  updateExportEnabled();   // keep Export button state correct on first load
+});
 
     function hydrateIcons(){
       document.querySelectorAll('.i').forEach(el => {
