@@ -479,7 +479,20 @@
     // =====================
     function escapeHtml(s){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-    }
+    } 
+    function updateExportEnabled(){
+  const hasProject = !!currentProjectId;
+  const q = (inputSearch.value || '').toLowerCase();
+  const visibleCount = hasProject
+    ? currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q)).length
+    : 0;
+
+  const enable = hasProject && visibleCount > 0;
+
+  btnExportCsv.disabled = !enable;
+  btnExportCsv.classList.toggle('opacity-50', !enable);
+  btnExportCsv.classList.toggle('cursor-not-allowed', !enable);
+}
     function safeCsv(s){
       const t = String(s||'');
       return (/[",\n]/.test(t)) ? '"'+t.replace(/"/g,'""')+'"' : t;
