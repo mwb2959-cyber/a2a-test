@@ -25,64 +25,64 @@
     .table { width:100%; font-size:14px; }
     .table th { text-align:left; font-weight:600; color:#475569; }
     .table tr { border-bottom:1px solid #f1f5f9; }
-   .outlined-text {
-  color: #dc2626; /* bright red */
-  text-shadow: 
-    -1px -1px 0 #fff,
-     1px -1px 0 #fff,
-    -1px  1px 0 #fff,
-     1px  1px 0 #fff;
-} 
+
+    /* Red title with white outline */
+    .outlined-text{
+      color:#dc2626;
+      text-shadow:
+        -1px -1px 0 #fff,
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff;
+    }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50">
   <!-- Header -->
   <header class="sticky top-0 z-20 bg-green-700 backdrop-blur border-b border-slate-200">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-    <!-- LEFT: triple apples + title -->
-    <div class="flex items-center gap-3">
-      <div class="flex items-center">
-  <!-- Left apple (slightly smaller) -->
-  <div class="relative h-10 w-10 grid place-content-center">
-    <span class="text-[28px] leading-none select-none">🍎</span>
-  </div>
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <!-- LEFT: triple apples + title -->
+      <div class="flex items-center gap-3">
+        <!-- Apple bunch -->
+        <div class="flex items-center">
+          <!-- Left apple (slightly smaller) -->
+          <div class="relative h-10 w-10 grid place-content-center">
+            <span class="text-[28px] leading-none select-none">🍎</span>
+          </div>
+          <!-- Center apple with A2a overlay (larger + sits on top + glow) -->
+          <div class="relative h-12 w-12 grid place-content-center -ml-3 z-10">
+            <span class="text-[34px] leading-none select-none drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]">🍏</span>
+            <span
+              class="absolute inset-0 grid place-content-center text-[16px] font-extrabold text-white"
+              style="text-shadow:
+                -2px -2px 0 #000,
+                 2px -2px 0 #000,
+                -2px  2px 0 #000,
+                 2px  2px 0 #000;">
+              A2a
+            </span>
+          </div>
+          <!-- Right apple (slightly smaller, overlaps behind) -->
+          <div class="relative h-10 w-10 grid place-content-center -ml-3">
+            <span class="text-[28px] leading-none select-none">🍎</span>
+          </div>
+        </div>
 
-  <!-- Center apple with A2a overlay (larger + sits on top + glow) -->
-  <div class="relative h-12 w-12 grid place-content-center -ml-3 z-10">
-    <span class="text-[34px] leading-none select-none drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]">
-      🍏
-    </span>
-    <span
-      class="absolute inset-0 grid place-content-center text-[16px] font-extrabold text-white"
-      style="text-shadow:
-        -2px -2px 0 #000,
-         2px -2px 0 #000,
-        -2px  2px 0 #000,
-         2px  2px 0 #000;">
-      A2a
-    </span>
-  </div>
+        <!-- Title -->
+        <h1 class="text-xl font-bold outlined-text">Apples-to-Apples</h1>
+      </div>
 
-  <!-- Right apple (slightly smaller, overlaps behind) -->
-  <div class="relative h-10 w-10 grid place-content-center -ml-3">
-    <span class="text-[28px] leading-none select-none">🍎</span>
-  </div>
-</div>
-      
-      <h1 class="text-xl font-bold outlined-text">Apples-to-Apples</h1>
+      <!-- RIGHT: buttons -->
+      <nav class="flex items-center gap-2">
+        <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV">
+          <span class="i" data-icon="download"></span> Export CSV
+        </button>
+        <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
+          <span class="i" data-icon="mail"></span> Email Purchasing
+        </button>
+      </nav>
     </div>
-
-    <!-- RIGHT: buttons -->
-    <nav class="flex items-center gap-2">
-      <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV">
-        <span class="i" data-icon="download"></span> Export CSV
-      </button>
-      <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
-        <span class="i" data-icon="mail"></span> Email Purchasing
-      </button>
-    </nav>
-  </div>
-</header>
+  </header>
 
   <!-- Main -->
   <main class="max-w-7xl mx-auto p-4 grid md:grid-cols-12 gap-4">
@@ -134,7 +134,7 @@
     <form method="dialog">
       <header class="flex items-center justify-between px-4 py-3 border-b">
         <h3 class="font-semibold">Add Quote</h3>
-         <button class="btn btn-ghost" value="cancel"><span class="i" data-icon="x"></span></button>
+        <button type="button" class="btn btn-ghost" onclick="dlgQuote.close()"><span class="i" data-icon="x"></span></button>
       </header>
       <div class="p-4 grid md:grid-cols-2 gap-3">
         <label class="block">
@@ -177,11 +177,11 @@
     const SUPABASE_URL = "https://bqwobrxpgrlbnczerzbm.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJxd292cnhwZ3JsYm5jemVyemJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MDcyMDIsImV4cCI6MjA3MjA4MzIwMn0.rZW766TNcEjvc8h2Ilmo4jU0_TXbPzMGAg7wAZvRxD8";
 
-const TABLES = {
-  PROJECT: "project",
-  QUOTE:   "quotes",
-  VIEW_RANKED: "apples_to_apples_rank",  // we'll try this first, then fall back to QUOTE
-};
+    const TABLES = {
+      PROJECT: "project",
+      QUOTE:   "quotes",
+      VIEW_RANKED: "apples_to_apples_rank",
+    };
 
     // =====================
     //  SUPABASE CLIENT
@@ -220,10 +220,10 @@ const TABLES = {
     //  INIT
     // =====================
     document.addEventListener('DOMContentLoaded', async () => {
-  hydrateIcons();
-  await loadProjects();
-  updateExportEnabled();   // keep Export button state correct on first load
-});
+      hydrateIcons();
+      await loadProjects();
+      updateExportEnabled();
+    });
 
     function hydrateIcons(){
       document.querySelectorAll('.i').forEach(el => {
@@ -233,28 +233,43 @@ const TABLES = {
       try { lucide.createIcons(); } catch {}
     }
 
+    // Load projects into dropdown (with a small debug log)
     async function loadProjects(){
-    const { data, error } = await supabase.from(TABLES.PROJECT).select('*');
+      const { data, error } = await supabase.from(TABLES.PROJECT).select('*');
+      if(error){
+        console.error('Error loading projects:', error);
+        alert('Error loading projects: ' + (error.message || 'unknown'));
+        return;
+      }
+      console.log('Projects loaded:', Array.isArray(data) ? data.length : 0, data);
 
-      if(error){ console.error(error); alert('Error loading projects'); return; }
-      for (const p of data){
+      // Clear options except the first placeholder
+      while (selectProject.options.length > 1) selectProject.remove(1);
+
+      for (const p of (data || [])){
         const opt = document.createElement('option');
-        opt.value = p.id; opt.textContent = p.name || `Project ${p.id}`;
+        opt.value = p.id;
+        opt.textContent = p.name || `Project ${p.id}`;
         selectProject.appendChild(opt);
       }
     }
 
-   selectProject.addEventListener('change', async () => {
-  currentProjectId = selectProject.value || null;
-  await refreshGrid();
-  updateExportEnabled();   // refresh Export state after project change
-}); 
+    selectProject.addEventListener('change', async () => {
+      currentProjectId = selectProject.value || null;
+      await refreshGrid();
+      updateExportEnabled();
+    });
 
     inputSearch.addEventListener('input', () => {
-  renderGrid();
-  updateExportEnabled();   // keep Export button in sync with search results
-});
-    btnRefresh.addEventListener('click', () => refreshGrid());
+      renderGrid();
+      updateExportEnabled();
+    });
+
+    btnRefresh.addEventListener('click', async () => {
+      await loadProjects();
+      await refreshGrid();
+      updateExportEnabled();
+    });
 
     btnNewQuote.addEventListener('click', () => {
       if(!currentProjectId){ alert('Pick a project first.'); return; }
@@ -277,20 +292,20 @@ const TABLES = {
       dlgQuote.close();
       await refreshGrid();
     });
-        // Allow ESC key to close the dialog (prevents required-field validation)
+
+    // Allow ESC key to close the dialog
     dlgQuote.addEventListener('cancel', (e) => {
       e.preventDefault();
       dlgQuote.close();
     });
 
-    // Allow clicking outside the white modal to close it
+    // Close when clicking outside modal panel
     dlgQuote.addEventListener('click', (e) => {
       const rect = dlgQuote.getBoundingClientRect();
-      const insideDialog =
+      const inside =
         e.clientX >= rect.left && e.clientX <= rect.right &&
         e.clientY >= rect.top && e.clientY <= rect.bottom;
-
-      if (!insideDialog) dlgQuote.close();
+      if (!inside) dlgQuote.close();
     });
 
     btnExportCsv.addEventListener('click', () => exportCsv());
@@ -333,116 +348,79 @@ const TABLES = {
       currentAwardedId = proj?.awarded_quote_id || null;
 
       // 2) Try the VIEW first; if it errors or returns empty, fall back to QUOTES
-      let data = null, error = null, used = 'view';
+      let data = null, error = null;
 
       ({ data, error } = await fetchRowsViaView(currentProjectId));
       if (error || !Array.isArray(data) || data.length === 0) {
         ({ data, error } = await fetchRowsViaQuotes(currentProjectId));
-        used = 'quotes';
       }
-
       if(error){ console.error(error); alert('Error loading quotes'); return; }
 
       // 3) Normalize fields and compute lowest
       const lowest = data?.length ? Math.min(...data.map(r => Number((r.quote_total ?? Infinity)))) : null;
 
-      currentRows = (data || []).map(r => {
-        if (used === 'quotes') {
-          return {
-            quote_id: r.id,
-            project_id: r.project_id,
-            vendor_name: r.vendor_name,
-            quote_total: r.quote_total,
-            deposit: r.deposit,
-            timeline: r.timeline,
-            status: r.status,
-            docs_ok: false, // not present in the table; default to false
-            is_lowest: Number(r.quote_total) === lowest
-          };
-        }
-        // used === 'view' (already has the right columns)
-        return {
-          ...r,
-          is_lowest: typeof r.is_lowest === 'boolean' ? r.is_lowest : (Number(r.quote_total) === lowest)
-        };
-      });
+      currentRows = (data || []).map(r => ({
+        quote_id: r.id,
+        project_id: r.project_id,
+        vendor_name: r.vendor_name,
+        quote_total: r.quote_total,
+        deposit: r.deposit,
+        timeline: r.timeline,
+        status: r.status,
+        docs_ok: r.docs_ok ?? false,
+        is_lowest: Number(r.quote_total) === lowest
+      }));
 
       renderGrid();
     }
 
-     function renderGrid(){
-  const q = (inputSearch.value || '').toLowerCase();
-  const rows = currentRows.filter(r => !q || (r.vendor_name || '').toLowerCase().includes(q));
-  gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
-  hydrateIcons();
+    function renderGrid(){
+      const q = (inputSearch.value || '').toLowerCase();
+      const rows = currentRows.filter(r => !q || (r.vendor_name || '').toLowerCase().includes(q));
+      gridBody.innerHTML = rows.map(r => rowHtml(r)).join('');
+      hydrateIcons();
 
-  // Wire Award buttons ONLY if we haven't awarded yet
-  if (!currentAwardedId) {
-    rows.forEach(r => {
-      const btn = document.getElementById(`award-${r.quote_id}`);
-      if (btn) { btn.addEventListener('click', () => awardVendor(r)); }
-    });
-  }
+      // Wire Award buttons ONLY if we haven't awarded yet
+      if (!currentAwardedId) {
+        rows.forEach(r => {
+          const btn = document.getElementById(`award-${r.quote_id}`);
+          if (btn) { btn.addEventListener('click', () => awardVendor(r)); }
+        });
+      }
 
-  updateExportEnabled(); // keep Export CSV button in sync
-}
-function rowHtml(r){
-  const money = (v) => v == null
-    ? '—'
-    : `$${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      updateExportEnabled(); // keep Export CSV button in sync
+    }
 
-  const badges = [
-    r.is_lowest ? '<span class="badge badge-lowest">Lowest</span>' : '',
-    (currentAwardedId === r.quote_id) ? '<span class="badge badge-awarded">Awarded</span>' : ''
-  ].filter(Boolean).join(' ');
+    function rowHtml(r){
+      const money = (v) => v == null
+        ? '—'
+        : `$${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  const actions = (currentAwardedId)
-    ? ''
-    : `<button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
+      const badges = [
+        r.is_lowest ? '<span class="badge badge-lowest">Lowest</span>' : '',
+        (currentAwardedId === r.quote_id) ? '<span class="badge badge-awarded">Awarded</span>' : ''
+      ].filter(Boolean).join(' ');
 
-  return `
-    <tr>
-      <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
-      <td class="px-4 py-3">${money(r.quote_total)}</td>
-      <td class="px-4 py-3">${money(r.deposit)}</td>
-      <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
-      <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
-      <td class="px-4 py-3">
-        ${ r.docs_ok
-            ? '<span class="badge badge-docs-ok">Docs ✅</span>'
-            : '<span class="badge badge-missing">Missing ❌</span>' }
-      </td>
-      <td class="px-4 py-3">${badges}</td>
-      <td class="px-4 py-3 text-right">${actions}</td>
-    </tr>`;
-}
-  const money = (v) => v == null
-    ? '—'
-    : `$${Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const actions = (currentAwardedId)
+        ? ''
+        : `<button id="award-${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
 
-  const badges = [
-    r.is_lowest ? `<span class="badge badge-lowest">Lowest</span>` : '',
-    (currentAwardedId === r.quote_id) ? `<span class="badge badge-awarded">Awarded</span>` : ''
-  ].filter(Boolean).join(' ');
-
-  const actions = (currentAwardedId)
-    ? ''
-    : `<button id="award-\${r.quote_id}" class="btn btn-primary"><span class="i" data-icon="trophy"></span> Award</button>`;
-
-  return `
-    <tr>
-      <td class="px-4 py-3 font-medium">\${escapeHtml(r.vendor_name || '')}</td>
-      <td class="px-4 py-3">\${money(r.quote_total)}</td>
-      <td class="px-4 py-3">\${money(r.deposit)}</td>
-      <td class="px-4 py-3">\${escapeHtml(r.timeline || '—')}</td>
-      <td class="px-4 py-3">\${escapeHtml(r.status || '—')}</td>
-      <td class="px-4 py-3">
-        \${r.docs_ok ? `<span class="badge badge-docs-ok">Docs ✅</span>` : `<span class="badge badge-missing">Missing ❌</span>`}
-      </td>
-      <td class="px-4 py-3">\${badges}</td>
-      <td class="px-4 py-3 text-right">\${actions}</td>
-    </tr>`;
-}
+      return `
+        <tr>
+          <td class="px-4 py-3 font-medium">${escapeHtml(r.vendor_name||'')}</td>
+          <td class="px-4 py-3">${money(r.quote_total)}</td>
+          <td class="px-4 py-3">${money(r.deposit)}</td>
+          <td class="px-4 py-3">${escapeHtml(r.timeline||'—')}</td>
+          <td class="px-4 py-3">${escapeHtml(r.status||'—')}</td>
+          <td class="px-4 py-3">
+            ${ r.docs_ok
+                ? '<span class="badge badge-docs-ok">Docs ✅</span>'
+                : '<span class="badge badge-missing">Missing ❌</span>' }
+          </td>
+          <td class="px-4 py-3">${badges}</td>
+          <td class="px-4 py-3 text-right">${actions}</td>
+        </tr>`;
+    }
 
     // =====================
     //  ACTIONS
@@ -460,48 +438,40 @@ function rowHtml(r){
     }
 
     function exportCsv(){
-  // Export only what's visible (respects the search filter)
-  const q = (inputSearch.value || '').toLowerCase();
-  const rows = currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q));
+      // Export only what's visible (respects the search filter)
+      const q = (inputSearch.value || '').toLowerCase();
+      const rows = currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q));
 
-  if(!rows.length){
-    alert('No rows to export for the current view.');
-    return;
-  }
+      if(!rows.length){
+        alert('No rows to export for the current view.');
+        return;
+      }
 
-  const headers = ['Vendor','Quote','Deposit','Timeline','Status','Docs','Lowest','Awarded'];
-  const lines = [headers.join(',')];
+      const headers = ['Vendor','Quote','Deposit','Timeline','Status','Docs','Lowest','Awarded'];
+      const lines = [headers.join(',')];
 
-  for(const r of rows){
-    const line = [
-      safeCsv(r.vendor_name),
-      r.quote_total ?? '',
-      r.deposit ?? '',
-      safeCsv(r.timeline||''),
-      safeCsv(r.status||''),
-      r.docs_ok ? 'Yes' : 'No',
-      r.is_lowest ? 'Yes' : 'No',
-      (currentAwardedId === r.quote_id) ? 'Yes' : 'No'
-    ].join(',');
-    lines.push(line);
-  }
-
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; 
-  a.download = `apples-to-apples-${currentProjectId || 'no-project'}.csv`;
-  document.body.appendChild(a); 
-  a.click(); 
-  a.remove();
-  URL.revokeObjectURL(url);
-}
+      for(const r of rows){
+        const line = [
+          safeCsv(r.vendor_name),
+          r.quote_total ?? '',
+          r.deposit ?? '',
+          safeCsv(r.timeline||''),
+          safeCsv(r.status||''),
+          r.docs_ok ? 'Yes' : 'No',
+          r.is_lowest ? 'Yes' : 'No',
+          (currentAwardedId === r.quote_id) ? 'Yes' : 'No'
+        ].join(',');
+        lines.push(line);
+      }
 
       const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `apples-to-apples-${currentProjectId}.csv`;
-      document.body.appendChild(a); a.click(); a.remove();
+      a.href = url;
+      a.download = `apples-to-apples-${currentProjectId || 'no-project'}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
       URL.revokeObjectURL(url);
     }
 
@@ -516,20 +486,22 @@ function rowHtml(r){
     // =====================
     function escapeHtml(s){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-    } 
+    }
+
     function updateExportEnabled(){
-  const hasProject = !!currentProjectId;
-  const q = (inputSearch.value || '').toLowerCase();
-  const visibleCount = hasProject
-    ? currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q)).length
-    : 0;
+      const hasProject = !!currentProjectId;
+      const q = (inputSearch.value || '').toLowerCase();
+      const visibleCount = hasProject
+        ? currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q)).length
+        : 0;
 
-  const enable = hasProject && visibleCount > 0;
+      const enable = hasProject && visibleCount > 0;
 
-  btnExportCsv.disabled = !enable;
-  btnExportCsv.classList.toggle('opacity-50', !enable);
-  btnExportCsv.classList.toggle('cursor-not-allowed', !enable);
-}
+      btnExportCsv.disabled = !enable;
+      btnExportCsv.classList.toggle('opacity-50', !enable);
+      btnExportCsv.classList.toggle('cursor-not-allowed', !enable);
+    }
+
     function safeCsv(s){
       const t = String(s||'');
       return (/[",\n]/.test(t)) ? '"'+t.replace(/"/g,'""')+'"' : t;
