@@ -236,7 +236,6 @@
     // Load projects into dropdown (with a small debug log)
     async function loadProjects(){
       const { data, error } = await supabase.from(TABLES.PROJECT).select('*');
-alert('Projects loaded count = ' + (Array.isArray(data) ? data.length : 0));
 if(error){
         console.error('Error loading projects:', error);
         alert('Error loading projects: ' + (error.message || 'unknown'));
