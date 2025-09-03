@@ -266,10 +266,19 @@ if(error){
     });
 
     btnRefresh.addEventListener('click', async () => {
-      await loadProjects();
-      await refreshGrid();
-      updateExportEnabled();
-    });
+  // Reload the project list
+  await loadProjects();
+
+  // Clear the selection & table
+  selectProject.value = '';
+  currentProjectId = null;
+  currentRows = [];
+  gridBody.innerHTML = '';
+  emptyState.classList.remove('hidden');
+  inputSearch.value = '';
+
+  updateExportEnabled();
+});
 
     btnNewQuote.addEventListener('click', () => {
       if(!currentProjectId){ alert('Pick a project first.'); return; }
