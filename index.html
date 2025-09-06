@@ -24,32 +24,31 @@
     .btn-ghost { background:#fff; color:#334155; border-color:#e2e8f0; }
 
     /* Make disabled buttons unmistakably disabled (global) */
-    .btn[disabled] {
-      opacity: .45;
-      pointer-events: none;
-      filter: grayscale(1);
-      background: #e5e7eb !important;   /* slate-200 */
-      border-color: #cbd5e1 !important;  /* slate-300 */
-      color: #64748b !important;         /* slate-500 */
-    }
+.btn[disabled] {
+  opacity: .45 !important;
+  pointer-events: none !important;
+  filter: grayscale(1) !important;
+  background: #e5e7eb !important;   /* slate-200 */
+  border-color: #cbd5e1 !important;  /* slate-300 */
+  color: #64748b !important;         /* slate-500 */
+  cursor: not-allowed !important;
+}
 
-    /* FORCE Export CSV to gray unless explicitly enabled */
-    #btnExportCsv {
-      background: #e5e7eb !important;   /* slate-200 */
-      border-color: #cbd5e1 !important; /* slate-300 */
-      color: #64748b !important;        /* slate-500 */
-      filter: grayscale(1) !important;
-      opacity: .45 !important;
-      cursor: not-allowed !important;
-    }
-    #btnExportCsv:not([disabled]) {
-      background: #000 !important;   /* enabled look */
-      border-color: #000 !important;
-      color: #fff !important;
-      filter: none !important;
-      opacity: 1 !important;
-      cursor: pointer !important;
-    }
+/* Export CSV specific */
+#btnExportCsv[disabled] {
+  background: #e5e7eb !important;   /* slate-200 */
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+#btnExportCsv:not([disabled]) {
+  background: #000 !important;   /* enabled look */
+  border-color: #000 !important;
+  color: #fff !important;
+  filter: none !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
 
     /* Red title with white outline */
     .outlined-text{
