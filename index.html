@@ -513,24 +513,39 @@ if(error){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
 
-      function updateExportEnabled(){
-      const hasProject = !!currentProjectId;
-      const q = (inputSearch.value || '').toLowerCase();
-      const visibleCount = hasProject
-        ? currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q)).length
-        : 0;
+  function updateExportEnabled(){
+  const hasProject = !!currentProjectId;
+  const q = (inputSearch.value || '').toLowerCase();
+  const visibleCount = hasProject
+    ? currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q)).length
+    : 0;
 
-      const enable = hasProject && visibleCount > 0;
+  const enable = hasProject && visibleCount > 0;
 
-      btnExportCsv.disabled = !enable;
+  // Set disabled attribute
+  btnExportCsv.disabled = !enable;
 
-      // Swap styles between ghost (disabled) and primary (enabled)
-      btnExportCsv.classList.toggle('btn-primary', enable);
-      btnExportCsv.classList.toggle('btn-ghost', !enable);
-
-      btnExportCsv.classList.toggle('opacity-50', !enable);
-      btnExportCsv.classList.toggle('cursor-not-allowed', !enable);
-    }  
+  if (enable) {
+    // ENABLED: solid primary look
+    btnExportCsv.className = 'btn btn-primary';
+    // wipe any forced inline styles
+    btnExportCsv.style.background = '';
+    btnExportCsv.style.borderColor = '';
+    btnExportCsv.style.color = '';
+    btnExportCsv.style.filter = '';
+    btnExportCsv.style.opacity = '';
+    btnExportCsv.style.pointerEvents = '';
+  } else {
+    // DISABLED: ghost + unmistakably gray
+    btnExportCsv.className = 'btn btn-ghost opacity-50 cursor-not-allowed';
+    btnExportCsv.style.background = '#e5e7eb';   // slate-200
+    btnExportCsv.style.borderColor = '#cbd5e1';  // slate-300
+    btnExportCsv.style.color = '#64748b';        // slate-500
+    btnExportCsv.style.filter = 'grayscale(1)';
+    btnExportCsv.style.opacity = '0.45';
+    btnExportCsv.style.pointerEvents = 'none';
+  }
+}    
   </script>
 </body>
 </html>
