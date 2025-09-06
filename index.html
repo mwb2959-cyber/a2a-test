@@ -10,8 +10,8 @@
   <!-- Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Small helper styles (plain CSS) -->
-<style>
+  <!-- Styles -->
+  <style>
     .hud-card { background: rgba(255,255,255,.9); backdrop-filter: blur(6px); border-radius: 1rem; box-shadow: 0 8px 24px rgba(15,23,42,.08); border: 1px solid #e2e8f0; }
     .badge { display:inline-flex; align-items:center; font-size:12px; font-weight:600; padding:2px 8px; border-radius:9999px; border:1px solid transparent; }
     .badge-lowest  { background:#d1fae5; color:#065f46; border-color:#a7f3d0; }
@@ -23,8 +23,8 @@
     .btn-primary { background:#000; color:#fff; border-color:#000; }
     .btn-ghost { background:#fff; color:#334155; border-color:#e2e8f0; }
 
-    /* Make disabled buttons unmistakably disabled (gray background) */
-          .btn[disabled] {
+    /* Make disabled buttons unmistakably disabled (global) */
+    .btn[disabled] {
       opacity: .45;
       pointer-events: none;
       filter: grayscale(1);
@@ -33,19 +33,23 @@
       color: #64748b !important;         /* slate-500 */
     }
 
-    /* Force disabled look specifically for Export CSV */
-    #btnExportCsv[disabled] {
-      background:#e5e7eb !important;   /* slate-200 */
-      border-color:#cbd5e1 !important;  /* slate-300 */
-      color:#64748b !important;         /* slate-500 */
-      filter:grayscale(1) !important;
-      opacity:.45 !important;
-      cursor:not-allowed !important;
+    /* FORCE Export CSV to gray unless explicitly enabled */
+    #btnExportCsv {
+      background: #e5e7eb !important;   /* slate-200 */
+      border-color: #cbd5e1 !important; /* slate-300 */
+      color: #64748b !important;        /* slate-500 */
+      filter: grayscale(1) !important;
+      opacity: .45 !important;
+      cursor: not-allowed !important;
     }
-
-    .table { width:100%; font-size:14px; }
-    .table th { text-align:left; font-weight:600; color:#475569; }
-    .table tr { border-bottom:1px solid #f1f5f9; }
+    #btnExportCsv:not([disabled]) {
+      background: #000 !important;   /* enabled look */
+      border-color: #000 !important;
+      color: #fff !important;
+      filter: none !important;
+      opacity: 1 !important;
+      cursor: pointer !important;
+    }
 
     /* Red title with white outline */
     .outlined-text{
@@ -56,7 +60,10 @@
         -1px  1px 0 #fff,
          1px  1px 0 #fff;
     }
-</style>
+
+    /* Tiny helper so overlapping apples look tight */
+    .apple-stack .apple { line-height: 1; }
+  </style>
 </head>
 <body class="min-h-screen bg-slate-50">
   <!-- Header -->
@@ -65,13 +72,13 @@
       <!-- LEFT: triple apples + title -->
       <div class="flex items-center gap-3">
         <!-- Apple bunch -->
-        <div class="flex items-center">
+        <div class="flex items-center apple-stack">
           <!-- Left apple (slightly smaller) -->
-          <div class="relative h-10 w-10 grid place-content-center">
+          <div class="relative h-10 w-10 grid place-content-center apple">
             <span class="text-[28px] leading-none select-none">🍎</span>
           </div>
           <!-- Center apple with A2a overlay (larger + sits on top + glow) -->
-          <div class="relative h-12 w-12 grid place-content-center -ml-3 z-10">
+          <div class="relative h-12 w-12 grid place-content-center -ml-3 z-10 apple">
             <span class="text-[34px] leading-none select-none drop-shadow-[0_0_6px_rgba(255,255,255,0.8)]">🍏</span>
             <span
               class="absolute inset-0 grid place-content-center text-[16px] font-extrabold text-white"
@@ -84,7 +91,7 @@
             </span>
           </div>
           <!-- Right apple (slightly smaller, overlaps behind) -->
-          <div class="relative h-10 w-10 grid place-content-center -ml-3">
+          <div class="relative h-10 w-10 grid place-content-center -ml-3 apple">
             <span class="text-[28px] leading-none select-none">🍎</span>
           </div>
         </div>
@@ -93,20 +100,15 @@
         <h1 class="text-xl font-bold outlined-text">Apples-to-Apples</h1>
       </div>
 
-    <!-- RIGHT: buttons -->
-<nav class="flex items-center gap-2">
-  <button
-    id="btnExportCsv"
-    class="btn btn-ghost opacity-50 cursor-not-allowed"
-    title="Export current view to CSV"
-    disabled
-  >
-    <span class="i" data-icon="download"></span> Export CSV
-  </button>
-  <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
-    <span class="i" data-icon="mail"></span> Email Purchasing
-  </button>
-</nav> 
+      <!-- RIGHT: buttons -->
+      <nav class="flex items-center gap-2">
+        <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV" disabled>
+          <span class="i" data-icon="download"></span> Export CSV
+        </button>
+        <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
+          <span class="i" data-icon="mail"></span> Email Purchasing
+        </button>
+      </nav>
     </div>
   </header>
 
@@ -248,7 +250,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
       hydrateIcons();
       await loadProjects();
-      updateExportEnabled();
+      updateExportEnabled(); // ensure initial state correct
     });
 
     function hydrateIcons(){
@@ -259,15 +261,14 @@
       try { lucide.createIcons(); } catch {}
     }
 
-    // Load projects into dropdown (with a small debug log)
+    // Load projects into dropdown
     async function loadProjects(){
       const { data, error } = await supabase.from(TABLES.PROJECT).select('*');
-if(error){
+      if(error){
         console.error('Error loading projects:', error);
         alert('Error loading projects: ' + (error.message || 'unknown'));
         return;
       }
-      console.log('Projects loaded:', Array.isArray(data) ? data.length : 0, data);
 
       // Clear options except the first placeholder
       while (selectProject.options.length > 1) selectProject.remove(1);
@@ -292,19 +293,19 @@ if(error){
     });
 
     btnRefresh.addEventListener('click', async () => {
-  // Reload the project list
-  await loadProjects();
+      // Reload the project list
+      await loadProjects();
 
-  // Clear the selection & table
-  selectProject.value = '';
-  currentProjectId = null;
-  currentRows = [];
-  gridBody.innerHTML = '';
-  emptyState.classList.remove('hidden');
-  inputSearch.value = '';
+      // Clear the selection & table
+      selectProject.value = '';
+      currentProjectId = null;
+      currentRows = [];
+      gridBody.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      inputSearch.value = '';
 
-  updateExportEnabled();
-});
+      updateExportEnabled();
+    });
 
     btnNewQuote.addEventListener('click', () => {
       if(!currentProjectId){ alert('Pick a project first.'); return; }
@@ -384,7 +385,6 @@ if(error){
 
       // 2) Try the VIEW first; if it errors or returns empty, fall back to QUOTES
       let data = null, error = null;
-
       ({ data, error } = await fetchRowsViaView(currentProjectId));
       if (error || !Array.isArray(data) || data.length === 0) {
         ({ data, error } = await fetchRowsViaQuotes(currentProjectId));
@@ -523,39 +523,23 @@ if(error){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
 
-  function updateExportEnabled(){
-  const hasProject = !!currentProjectId;
-  const q = (inputSearch.value || '').toLowerCase();
-  const visibleCount = hasProject
-    ? currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q)).length
-    : 0;
+    function updateExportEnabled(){
+      const hasProject = !!currentProjectId;
+      const q = (inputSearch.value || '').toLowerCase();
+      const visibleCount = hasProject
+        ? currentRows.filter(r => !q || (r.vendor_name||'').toLowerCase().includes(q)).length
+        : 0;
 
-  const enable = hasProject && visibleCount > 0;
+      const enable = hasProject && visibleCount > 0;
 
-  // Set disabled attribute
-  btnExportCsv.disabled = !enable;
+      // Set disabled attribute which drives the forced CSS above
+      btnExportCsv.disabled = !enable;
+    }
 
-  if (enable) {
-    // ENABLED: solid primary look
-    btnExportCsv.className = 'btn btn-primary';
-    btnExportCsv.style.background = '';
-    btnExportCsv.style.borderColor = '';
-    btnExportCsv.style.color = '';
-    btnExportCsv.style.filter = '';
-    btnExportCsv.style.opacity = '';
-    btnExportCsv.style.pointerEvents = '';
-  } else {
-    // DISABLED: ghost + unmistakably gray
-    btnExportCsv.className = 'btn btn-ghost opacity-50 cursor-not-allowed';
-    btnExportCsv.style.background = '#e5e7eb';   // slate-200
-    btnExportCsv.style.borderColor = '#cbd5e1';  // slate-300
-    btnExportCsv.style.color = '#64748b';        // slate-500
-    btnExportCsv.style.filter = 'grayscale(1)';
-    btnExportCsv.style.opacity = '0.45';
-    btnExportCsv.style.pointerEvents = 'none';
-  }
-}
-</script>
+    function safeCsv(s){
+      const t = String(s||'');
+      return (/[",\n]/.test(t)) ? '"'+t.replace(/"/g,'""')+'"' : t;
+    }
   </script>
 </body>
 </html>
