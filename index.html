@@ -83,15 +83,20 @@
         <h1 class="text-xl font-bold outlined-text">Apples-to-Apples</h1>
       </div>
 
-      <!-- RIGHT: buttons -->
-      <nav class="flex items-center gap-2">
-        <button id="btnExportCsv" class="btn btn-ghost" title="Export current view to CSV">
-          <span class="i" data-icon="download"></span> Export CSV
-        </button>
-        <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
-          <span class="i" data-icon="mail"></span> Email Purchasing
-        </button>
-      </nav>
+    <!-- RIGHT: buttons -->
+<nav class="flex items-center gap-2">
+  <button
+    id="btnExportCsv"
+    class="btn btn-ghost opacity-50 cursor-not-allowed"
+    title="Export current view to CSV"
+    disabled
+  >
+    <span class="i" data-icon="download"></span> Export CSV
+  </button>
+  <button id="btnEmailPurchasing" class="btn btn-ghost" title="Compose email to Purchasing">
+    <span class="i" data-icon="mail"></span> Email Purchasing
+  </button>
+</nav> 
     </div>
   </header>
 
