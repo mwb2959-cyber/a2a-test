@@ -513,7 +513,7 @@ if(error){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
 
-  function updateExportEnabled(){
+ function updateExportEnabled(){
   const hasProject = !!currentProjectId;
   const q = (inputSearch.value || '').toLowerCase();
   const visibleCount = hasProject
@@ -545,7 +545,7 @@ if(error){
     btnExportCsv.style.opacity = '0.45';
     btnExportCsv.style.pointerEvents = 'none';
   }
-}    
+}
   </script>
 </body>
 </html>
