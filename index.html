@@ -497,7 +497,7 @@ if(error){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
 
-    function updateExportEnabled(){
+      function updateExportEnabled(){
       const hasProject = !!currentProjectId;
       const q = (inputSearch.value || '').toLowerCase();
       const visibleCount = hasProject
@@ -507,14 +507,14 @@ if(error){
       const enable = hasProject && visibleCount > 0;
 
       btnExportCsv.disabled = !enable;
+
+      // Swap styles between ghost (disabled) and primary (enabled)
+      btnExportCsv.classList.toggle('btn-primary', enable);
+      btnExportCsv.classList.toggle('btn-ghost', !enable);
+
       btnExportCsv.classList.toggle('opacity-50', !enable);
       btnExportCsv.classList.toggle('cursor-not-allowed', !enable);
-    }
-
-    function safeCsv(s){
-      const t = String(s||'');
-      return (/[",\n]/.test(t)) ? '"'+t.replace(/"/g,'""')+'"' : t;
-    }
+    }  
   </script>
 </body>
 </html>
