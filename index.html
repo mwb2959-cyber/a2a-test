@@ -513,7 +513,7 @@ if(error){
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
     }
 
- function updateExportEnabled(){
+  function updateExportEnabled(){
   const hasProject = !!currentProjectId;
   const q = (inputSearch.value || '').toLowerCase();
   const visibleCount = hasProject
@@ -528,7 +528,6 @@ if(error){
   if (enable) {
     // ENABLED: solid primary look
     btnExportCsv.className = 'btn btn-primary';
-    // wipe any forced inline styles
     btnExportCsv.style.background = '';
     btnExportCsv.style.borderColor = '';
     btnExportCsv.style.color = '';
@@ -546,6 +545,7 @@ if(error){
     btnExportCsv.style.pointerEvents = 'none';
   }
 }
+</script>
   </script>
 </body>
 </html>
