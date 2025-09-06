@@ -24,13 +24,23 @@
     .btn-ghost { background:#fff; color:#334155; border-color:#e2e8f0; }
 
     /* Make disabled buttons unmistakably disabled (gray background) */
-    .btn[disabled] {
+          .btn[disabled] {
       opacity: .45;
       pointer-events: none;
       filter: grayscale(1);
       background: #e5e7eb !important;   /* slate-200 */
       border-color: #cbd5e1 !important;  /* slate-300 */
       color: #64748b !important;         /* slate-500 */
+    }
+
+    /* Force disabled look specifically for Export CSV */
+    #btnExportCsv[disabled] {
+      background:#e5e7eb !important;   /* slate-200 */
+      border-color:#cbd5e1 !important;  /* slate-300 */
+      color:#64748b !important;         /* slate-500 */
+      filter:grayscale(1) !important;
+      opacity:.45 !important;
+      cursor:not-allowed !important;
     }
 
     .table { width:100%; font-size:14px; }
